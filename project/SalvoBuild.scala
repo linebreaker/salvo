@@ -18,7 +18,7 @@ object BuildSettings {
     organization := "com.bumnetworks",
     version := "0.0.1-SNAPSHOT",
     scalaVersion := ScalaVersion,
-    scalacOptions ++= Seq("-deprecation",  "-unchecked", "-feature", "-language:implicitConversions", "-language:reflectiveCalls"),
+    scalacOptions ++= Seq("-deprecation",  "-unchecked", "-feature", "-language:implicitConversions", "-language:reflectiveCalls", "-language:higherKinds"),
     shellPrompt := prompt,
     showTiming := true,
     parallelExecution := true,
@@ -29,10 +29,10 @@ object BuildSettings {
     initialCommands in console in Test := """""",
     publishTo <<= (version, baseDirectory)({
       (v, base) =>
-        val repo = base / ".." / "repo"
+      val repo = base / ".." / "repo"
       Some(Resolver.file("repo",
-                         if (v.trim.endsWith("SNAPSHOT")) repo / "snapshots"
-                         else repo / "releases"))
+        if (v.trim.endsWith("SNAPSHOT")) repo / "snapshots"
+        else repo / "releases"))
     })
   ) ++ scalariformSettings ++ formatSettings
 
@@ -43,31 +43,34 @@ object BuildSettings {
 
   lazy val formattingPreferences = {
     FormattingPreferences().
-    setPreference(AlignParameters, true).
-    setPreference(AlignSingleLineCaseStatements, true).
-    setPreference(CompactControlReadability, true).
-    setPreference(CompactStringConcatenation, true).
-    setPreference(DoubleIndentClassDeclaration, true).
-    setPreference(FormatXml, true).
-    setPreference(IndentLocalDefs, true).
-    setPreference(IndentPackageBlocks, true).
-    setPreference(IndentSpaces, 2).
-    setPreference(MultilineScaladocCommentsStartOnFirstLine, true).
-    setPreference(PreserveSpaceBeforeArguments, false).
-    setPreference(PreserveDanglingCloseParenthesis, false).
-    setPreference(RewriteArrowSymbols, false).
-    setPreference(SpaceBeforeColon, false).
-    setPreference(SpaceInsideBrackets, false).
-    setPreference(SpacesWithinPatternBinders, true)
+      setPreference(AlignParameters, true).
+      setPreference(AlignSingleLineCaseStatements, true).
+      setPreference(CompactControlReadability, true).
+      setPreference(CompactStringConcatenation, true).
+      setPreference(DoubleIndentClassDeclaration, true).
+      setPreference(FormatXml, true).
+      setPreference(IndentLocalDefs, true).
+      setPreference(IndentPackageBlocks, true).
+      setPreference(IndentSpaces, 2).
+      setPreference(MultilineScaladocCommentsStartOnFirstLine, true).
+      setPreference(PreserveSpaceBeforeArguments, false).
+      setPreference(PreserveDanglingCloseParenthesis, false).
+      setPreference(RewriteArrowSymbols, false).
+      setPreference(SpaceBeforeColon, false).
+      setPreference(SpaceInsideBrackets, false).
+      setPreference(SpacesWithinPatternBinders, true)
   }
 }
 
 object Deps {
   import Versions._
 
+  val scalaz = "org.scalaz" %% "scalaz-core" % "7.0.3"
+  val commons_io = "commons-io" % "commons-io" % "2.4"
   val sqlite = "org.xerial" % "sqlite-jdbc" % "3.7.15-M1"
   val specs = "org.scala-tools.testing" %% "specs" % SpecsVersion % "test"
 
+  val TreeDeps = Seq(scalaz, commons_io, specs)
   val CoreDeps = Seq(sqlite, specs)
 }
 
@@ -78,10 +81,15 @@ object SalvoBuild extends Build {
   lazy val root = Project(
     id = "salvo", base = file("."),
     settings = buildSettings ++ Seq(publish := {})
-  ) aggregate(core)
+  ) aggregate(tree, core)
+
+  lazy val tree = Project(
+    id = "salvo-tree", base = file("tree"),
+    settings = buildSettings ++ Seq(libraryDependencies ++= TreeDeps)
+  )
 
   lazy val core = Project(
     id = "salvo-core", base = file("core"),
     settings = buildSettings ++ Seq(libraryDependencies ++= CoreDeps)
-  )
+  ) dependsOn(tree)
 }
