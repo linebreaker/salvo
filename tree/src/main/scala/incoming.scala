@@ -1,7 +1,7 @@
 package salvo.tree
 
 import java.nio.file.{ Path, StandardWatchEventKinds, WatchEvent, WatchKey }
-import StandardWatchEventKinds.ENTRY_CREATE
+import StandardWatchEventKinds._
 import scala.collection.JavaConversions._
 import org.apache.commons.io.FilenameUtils.getExtension
 
@@ -20,19 +20,24 @@ abstract class IncomingDir(dir: Path) {
   }
 
   val watcher = dir.getFileSystem().newWatchService()
-  dir.register(watcher, ENTRY_CREATE)
+  dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE)
 
   sealed abstract class ParsedEvent
   case class New(path: Path, state: State) extends ParsedEvent
 
-  def parse(key: WatchKey): List[Either[WatchEvent[_], ParsedEvent]] = if (key == null) Nil else {
-    val events = key.pollEvents()
-    val parsed = events.foldRight(List.empty[Either[WatchEvent[_], ParsedEvent]]) {
-      (evt, acc) => parse(evt) :: acc
-    }
+  def withKey[T](key: WatchKey)(f: WatchKey => T): T = {
+    val result = f(key)
     key.reset()
-    parsed
+    result
   }
+
+  def parse(key: WatchKey): List[ParsedEvent] =
+    if (key == null) Nil else
+      withKey(key) {
+        _.pollEvents().foldRight(List.empty[ParsedEvent]) {
+          (evt, acc) => parse(evt).map(_ :: acc).getOrElse(acc)
+        }
+      }
 
   def coerce[C: Manifest](pred: WatchEvent[_] => Boolean)(_evt: WatchEvent[_]): Option[WatchEvent[C]] =
     if (pred(_evt)) Some(_evt.asInstanceOf[WatchEvent[C]])
@@ -41,13 +46,12 @@ abstract class IncomingDir(dir: Path) {
       None
     }
 
-  def parse(_evt: WatchEvent[_]): Either[WatchEvent[_], ParsedEvent] = {
-    (for {
+  def parse(_evt: WatchEvent[_]): Option[ParsedEvent] =
+    for {
       new_evt <- coerce[Path](_.kind() == ENTRY_CREATE)(_evt)
       path = dir.resolve(new_evt.context())
       state <- State(path)
-    } yield Right(New(path, state))).getOrElse(Left(_evt))
-  }
+    } yield New(path, state)
 
   def poll() = Option(watcher.poll()).map(parse).getOrElse(Nil)
   def take() = parse(watcher.take())
