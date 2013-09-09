@@ -22,8 +22,25 @@ abstract class IncomingDir(dir: Path) {
   val watcher = dir.getFileSystem().newWatchService()
   dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE)
 
-  sealed abstract class ParsedEvent
-  case class New(path: Path, state: State) extends ParsedEvent
+  sealed abstract class ParsedEvent(val path: Path, val state: State, val evt: WatchEvent[Path])
+  class New(path: Path, state: State, evt: WatchEvent[Path]) extends ParsedEvent(path, state, evt)
+  object ParsedEvent {
+    implicit object byKind extends Ordering[WatchEvent.Kind[_]] {
+      def compare(x: WatchEvent.Kind[_], y: WatchEvent.Kind[_]) =
+        (x, y) match {
+          case (ENTRY_CREATE, ENTRY_DELETE) => -1
+          case (ENTRY_DELETE, ENTRY_CREATE) => 1
+          case _                            => 0
+        }
+    }
+    implicit val ordering = Ordering[(WatchEvent.Kind[_], Long, String)].on[ParsedEvent] {
+      evt =>
+        val ts =
+          if (evt.evt.kind() == ENTRY_CREATE) evt.path.toFile().lastModified()
+          else -1
+        (evt.evt.kind, ts, evt.path.toString)
+    }
+  }
 
   def withKey[T](key: WatchKey)(f: WatchKey => T): T = {
     val result = f(key)
@@ -41,18 +58,15 @@ abstract class IncomingDir(dir: Path) {
 
   def coerce[C: Manifest](pred: WatchEvent[_] => Boolean)(_evt: WatchEvent[_]): Option[WatchEvent[C]] =
     if (pred(_evt)) Some(_evt.asInstanceOf[WatchEvent[C]])
-    else {
-      System.err.println(s"coerce[${manifest.runtimeClass.getName}]: unmatched for kind=${_evt.kind()}")
-      None
-    }
+    else None
 
   def parse(_evt: WatchEvent[_]): Option[ParsedEvent] =
     for {
       new_evt <- coerce[Path](_.kind() == ENTRY_CREATE)(_evt)
       path = dir.resolve(new_evt.context())
       state <- State(path)
-    } yield New(path, state)
+    } yield new New(path, state, new_evt)
 
-  def poll() = Option(watcher.poll()).map(parse).getOrElse(Nil)
-  def take() = parse(watcher.take())
+  def poll() = Option(watcher.poll()).map(parse).getOrElse(Nil).sorted(ParsedEvent.ordering)
+  def take() = parse(watcher.take()).sorted(ParsedEvent.ordering)
 }
