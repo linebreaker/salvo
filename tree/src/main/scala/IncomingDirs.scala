@@ -6,29 +6,29 @@ import scala.collection.JavaConversions._
 import scalaz._
 import Scalaz._
 
-abstract class IncomingDirs(dir: Path) {
+class IncomingDirs(dir: Path) {
   val watcher = dir.getFileSystem().newWatchService()
   dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE)
 
-  def withKey[T](key: WatchKey)(f: WatchKey => T)(implicit mt: Monoid[T]): T =
+  private def withKey[T](key: WatchKey)(f: WatchKey => T)(implicit mt: Monoid[T]): T =
     if (key == null) mt.zero else {
       val result = f(key)
       key.reset()
       result
     }
 
-  def parse(key: WatchKey): List[Dir] =
+  private def parse(key: WatchKey): List[Dir] =
     withKey(key) {
       _.pollEvents().foldRight(List.empty[Dir]) {
         (evt, acc) => parse(evt).map(_ :: acc).getOrElse(acc)
       }
     }
 
-  def coerce[C](pred: WatchEvent[_] => Boolean)(_evt: WatchEvent[_]): Option[WatchEvent[C]] =
+  private def coerce[C](pred: WatchEvent[_] => Boolean)(_evt: WatchEvent[_]): Option[WatchEvent[C]] =
     if (pred(_evt)) Some(_evt.asInstanceOf[WatchEvent[C]])
     else None
 
-  def parse(_evt: WatchEvent[_]): Option[Dir] =
+  private def parse(_evt: WatchEvent[_]): Option[Dir] =
     for {
       new_evt <- coerce[Path](_.kind() == ENTRY_CREATE)(_evt)
       path = dir.resolve(new_evt.context())
