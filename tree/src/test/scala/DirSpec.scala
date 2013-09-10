@@ -16,8 +16,8 @@ class DirSpec extends Specification with TestUtils {
       Dir("invalid") must beNone
       Dir("inavlid.invalid") must beNone
       Dir("1") must beNone
-      Dir("1.incomplete") must beSome.which(_ == Dir(version = 1, state = Incomplete))
-      Dir("2.ready") must beSome.which(_ == Dir(version = 2, state = Ready))
+      Dir(validVersionString+".incomplete") must beSome.which(_ == Dir(version = validVersion, state = Incomplete))
+      Dir(validVersionString+".ready") must beSome.which(_ == Dir(version = validVersion, state = Ready))
     }
   }
 }

@@ -2,7 +2,6 @@ package salvo.tree
 
 import java.nio.file.{ Path, Paths }
 import org.apache.commons.io.FilenameUtils.{ getExtension, getBaseName }
-import scala.util.control.Exception.allCatch
 
 object Dir {
   sealed abstract class State(val ext: String)
@@ -28,13 +27,24 @@ object Dir {
 
   def apply(path: Path): Option[Dir] =
     for {
-      version <- allCatch.opt(getBaseName(path.getFileName().toString).toLong)
+      version <- Version(getBaseName(path.getFileName().toString))
       state <- State(path)
     } yield Dir(version, state)
 
-  implicit val ordering = Ordering[(Long, State)].on[Dir](dir => dir.version -> dir.state)
+  implicit val ordering = Ordering[(Long, State)].on[Dir](dir => dir.version.v -> dir.state)
+
+  // def init(state: Dir.State = Incomplete, calendar: Calendar = Calendar.getInstance()) =
+  //   Dir(
+  //     version = "%04d%02d%02d%02d%02d%02d".format(
+  //       calendar.get(Calendar.YEAR),
+  //       calendar.get(Calendar.MONTH) + 1,
+  //       calendar.get(Calendar.DATE),
+  //       calendar.get(Calendar.HOUR),
+  //       calendar.get(Calendar.MINUTE),
+  //       calendar.get(Calendar.SECOND)).toLong,
+  //     state = state)
 }
 
-case class Dir(version: Long, state: Dir.State) {
-  lazy val path = Paths.get(version+"."+state.ext)
+case class Dir(version: Version, state: Dir.State) {
+  lazy val path = Paths.get(version.v+"."+state.ext)
 }
