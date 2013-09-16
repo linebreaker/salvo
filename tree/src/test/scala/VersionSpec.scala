@@ -8,7 +8,7 @@ class VersionSpec extends Specification with TestUtils {
     "initialize to expected format" in {
       val calendar = java.util.Calendar.getInstance()
       calendar.set(2008, 2, 28, 4, 45, 30)
-      Version.init(calendar) must_== validVersion
+      Version.at(calendar).copy(minor = validVersion.minor) must_== validVersion
     }
     "parse formatted versions" in {
       Version(validVersionString) must beSome.which(_ == validVersion)

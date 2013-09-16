@@ -31,20 +31,12 @@ object Dir {
       state <- State(path)
     } yield Dir(version, state)
 
-  implicit val ordering = Ordering[(Long, State)].on[Dir](dir => dir.version.v -> dir.state)
+  implicit val ordering = Ordering[(Long, Long, State)].on[Dir](dir => (dir.version.major, dir.version.minor, dir.state))
 
-  // def init(state: Dir.State = Incomplete, calendar: Calendar = Calendar.getInstance()) =
-  //   Dir(
-  //     version = "%04d%02d%02d%02d%02d%02d".format(
-  //       calendar.get(Calendar.YEAR),
-  //       calendar.get(Calendar.MONTH) + 1,
-  //       calendar.get(Calendar.DATE),
-  //       calendar.get(Calendar.HOUR),
-  //       calendar.get(Calendar.MINUTE),
-  //       calendar.get(Calendar.SECOND)).toLong,
-  //     state = state)
+  def init(state: Dir.State = Incomplete) =
+    Dir(version = Version.now(), state = state)
 }
 
 case class Dir(version: Version, state: Dir.State) {
-  lazy val path = Paths.get(version.v+"."+state.ext)
+  lazy val path = Paths.get(version.major+"."+version.minor+"."+state.ext)
 }

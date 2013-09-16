@@ -6,7 +6,9 @@ import scala.collection.JavaConversions._
 import scalaz._
 import Scalaz._
 
-class IncomingDirs(dir: Path) {
+class IncomingDirs(val dir: Path) {
+  if (!dir.toFile.exists) dir.toFile.mkdirs()
+  if (!dir.toFile.isDirectory) sys.error("%s doesn't exist or isn't a directory".format(dir))
   val watcher = dir.getFileSystem().newWatchService()
   dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE)
 
@@ -35,6 +37,7 @@ class IncomingDirs(dir: Path) {
       dir <- Dir(path)
     } yield dir
 
-  def poll() = Option(watcher.poll()).map(parse).getOrElse(Nil)
+  def poll() = Option(watcher.poll()).toList.flatMap(parse(_))
   def take() = parse(watcher.take())
+  def close() = watcher.close()
 }
