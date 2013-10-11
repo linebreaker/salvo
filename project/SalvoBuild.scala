@@ -2,6 +2,8 @@ import sbt._
 import Keys._
 import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
+import sbtassembly.Plugin._
+import AssemblyKeys._
 
 sealed trait ScalaRelease
 case object TwoNine extends ScalaRelease
@@ -85,9 +87,11 @@ object Deps {
   val scalaz = "org.scalaz" %% "scalaz-core" % "7.0.3"
   val commons_io = "commons-io" % "commons-io" % "2.4"
   val sqlite = "org.xerial" % "sqlite-jdbc" % "3.7.15-M1"
+  val scopt = "com.github.scopt" %% "scopt" % "3.1.0"
 
   val TreeDeps = Seq(scalaz, commons_io)
   val CoreDeps = Seq(sqlite)
+  val CliDeps = Seq(scopt)
 }
 
 object SalvoBuild extends Build {
@@ -97,7 +101,7 @@ object SalvoBuild extends Build {
   lazy val root = Project(
     id = "salvo", base = file("."),
     settings = buildSettings ++ Seq(publish := {})
-  ) aggregate(tree, core)
+  ) aggregate(tree, core, cli)
 
   lazy val tree = Project(
     id = "salvo-tree", base = file("tree"),
@@ -108,4 +112,14 @@ object SalvoBuild extends Build {
     id = "salvo-core", base = file("core"),
     settings = buildSettings ++ Seq(libraryDependencies ++= CoreDeps)
   ) dependsOn(tree)
+
+  lazy val cli = Project(
+    id = "salvo-cli", base = file("cli"),
+    settings = buildSettings ++ Seq(libraryDependencies ++= CliDeps) ++ assemblySettings ++ Seq(
+      mainClass in assembly := Some("salvo.cli.Main"),
+      test in assembly := {},
+      jarName in assembly <<= (name, version) map { (n, v) => s"${n}-${v}.jar" },
+      assemblyCacheUnzip in assembly := false,
+      assemblyCacheOutput in assembly := false)
+  ) dependsOn(core)
 }

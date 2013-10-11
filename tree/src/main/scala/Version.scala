@@ -35,4 +35,6 @@ object Version {
   }
 }
 
-case class Version(major: Long, minor: Long)
+case class Version(major: Long, minor: Long) {
+  override lazy val toString = major+"."+minor
+}

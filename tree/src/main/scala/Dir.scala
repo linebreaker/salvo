@@ -38,5 +38,5 @@ object Dir {
 }
 
 case class Dir(version: Version, state: Dir.State) {
-  lazy val path = Paths.get(version.major+"."+version.minor+"."+state.ext)
+  lazy val path = Paths.get(version+"."+state.ext)
 }
