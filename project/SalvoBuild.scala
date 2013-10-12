@@ -23,8 +23,8 @@ object BuildSettings {
   lazy val buildSettings = Defaults.defaultSettings ++ Seq(
     organization := "com.bumnetworks",
     version := "0.0.1-SNAPSHOT",
-    scalaVersion := "2.10.2",
-    crossScalaVersions := Seq("2.9.2", "2.10.2"),
+    scalaVersion := "2.10.3",
+    crossScalaVersions := Seq("2.9.2", "2.10.3"),
     scalacOptions <++= scalaVersion map {
       sv =>
       ScalaRelease(sv) match {
