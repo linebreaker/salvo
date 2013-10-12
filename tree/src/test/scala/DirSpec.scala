@@ -19,5 +19,25 @@ class DirSpec extends Specification with TestUtils {
       Dir(validVersionString+".incomplete") must beSome.which(_ == Dir(version = validVersion, state = Incomplete))
       Dir(validVersionString+".ready") must beSome.which(_ == Dir(version = validVersion, state = Ready))
     }
+    "sort directories correctly" in {
+      val dirs = {
+        Dir(version = validVersion, state = Incomplete) ::
+          Dir(version = validVersion, state = Ready) ::
+          Dir(version = validVersion, state = Ready) ::
+          Dir(version = validVersion, state = Incomplete) ::
+          Dir(version = validVersion, state = Ready) ::
+          Dir(version = validVersion, state = Incomplete) ::
+          Nil
+      }
+      dirs.sorted must_== {
+        Dir(version = validVersion, state = Ready) ::
+          Dir(version = validVersion, state = Ready) ::
+          Dir(version = validVersion, state = Ready) ::
+          Dir(version = validVersion, state = Incomplete) ::
+          Dir(version = validVersion, state = Incomplete) ::
+          Dir(version = validVersion, state = Incomplete) ::
+          Nil
+      }
+    }
   }
 }
