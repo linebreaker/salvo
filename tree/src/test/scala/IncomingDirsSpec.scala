@@ -29,8 +29,10 @@ object IncomingDirsSpec {
   trait ctx extends After {
     lazy val root = Files.createTempDirectory(Paths.get("/tmp"), classOf[IncomingDirsSpec].getSimpleName+".")
     lazy val incoming = {
+      root.resolve("incoming").toFile.mkdirs()
       val in = new IncomingDirs(root.resolve("incoming"))
       println("spawning IncomingDirs in %s".format(in.dir))
+      in.start()
       in
     }
     def attempt[T](tag: String)(attempts: Int = 100, delay: Long = 300L, expected: Int)(f: List[Dir] => T): Option[T] = {
@@ -48,7 +50,7 @@ object IncomingDirsSpec {
       if (satisfied) Some(f(dirs)) else None
     }
     def after {
-      incoming.close()
+      incoming.stop()
       deleteDirectory(root.toFile)
       println("cleaned up %s".format(root))
     }

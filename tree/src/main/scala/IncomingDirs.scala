@@ -1,16 +1,30 @@
 package salvo.tree
 
-import java.nio.file.{ Path, StandardWatchEventKinds, WatchEvent, WatchKey }
+import java.nio.file.{ Path, StandardWatchEventKinds, WatchEvent, WatchKey, WatchService }
 import StandardWatchEventKinds._
 import scala.collection.JavaConversions._
 import scalaz._
 import Scalaz._
 
 class IncomingDirs(val dir: Path) {
-  if (!dir.toFile.exists) dir.toFile.mkdirs()
-  if (!dir.toFile.isDirectory) sys.error("%s doesn't exist or isn't a directory".format(dir))
-  val watcher = dir.getFileSystem().newWatchService()
-  dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE)
+  def validate() {
+    if (!dir.toFile.isDirectory) sys.error("%s doesn't exist or isn't a directory".format(dir))
+  }
+
+  private var _watcher = Option.empty[WatchService]
+  def watcher = _watcher.getOrElse(sys.error(dir+": start() was not called"))
+
+  def start() {
+    if (_watcher.nonEmpty) sys.error(dir+": start() called more than once")
+    validate()
+    _watcher = Option(dir.getFileSystem().newWatchService())
+    dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE)
+  }
+
+  def stop() {
+    watcher.close()
+    _watcher = None
+  }
 
   private def withKey[T](key: WatchKey)(f: WatchKey => T)(implicit mt: Monoid[T]): T =
     if (key == null) mt.zero else {
@@ -39,5 +53,4 @@ class IncomingDirs(val dir: Path) {
 
   def poll() = Option(watcher.poll()).toList.flatMap(parse(_))
   def take() = parse(watcher.take())
-  def close() = watcher.close()
 }

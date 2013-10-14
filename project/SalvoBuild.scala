@@ -101,12 +101,16 @@ object SalvoBuild extends Build {
   lazy val root = Project(
     id = "salvo", base = file("."),
     settings = buildSettings ++ Seq(publish := {})
-  ) aggregate(tree, core, cli)
+  ) aggregate(util, tree, core, cli)
+
+  lazy val util = Project(
+    id = "salvo-util", base = file("util"),
+    settings = buildSettings)
 
   lazy val tree = Project(
     id = "salvo-tree", base = file("tree"),
     settings = buildSettings ++ Seq(libraryDependencies ++= TreeDeps)
-  )
+  ) dependsOn(util)
 
   lazy val core = Project(
     id = "salvo-core", base = file("core"),
