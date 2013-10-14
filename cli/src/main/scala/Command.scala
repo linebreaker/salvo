@@ -3,6 +3,7 @@ package salvo.cli
 import scopt.OptionDef
 import java.nio.file._
 import salvo.util._
+import salvo.tree._
 
 abstract class Command(val name: String) extends (Config => Unit) {
   abstract class LocalConfig {
@@ -23,7 +24,6 @@ trait NilLocalConfig {
 }
 
 object InitVersion extends Command("init-version") with NilLocalConfig {
-  import salvo.tree.Version
   def apply(config: Config) {
     println(Version.now())
   }
@@ -43,9 +43,25 @@ object Init extends Command("init") with Util {
 }
 
 object CreateVersion extends Command("create-version") with NilLocalConfig with Util {
-  import salvo.tree.{ Version, Dir }
   def apply(config: Config) {
     val tree = validate(config)
     for (created <- tree.incoming.create()) println(tree / created)
+  }
+}
+
+object TransitionVersion extends Command("transition-version") with Util {
+  class LC(var dir: Option[Dir] = None, var state: Option[Dir.State] = None) extends LocalConfig
+  val localConfig = new LC()
+  def init(parser: Parser) = {
+    (parser.opt[Dir]("dir") action localConfig.admit(d => localConfig.dir = Some(d))) ::
+      (parser.opt[Dir.State]("state") action localConfig.admit(s => localConfig.state = Some(s))) :: Nil
+  }
+  def apply(config: Config) {
+    val tree = validate(config)
+    println("dir = "+localConfig.dir+"; state = "+localConfig.state)
+    for {
+      dir <- localConfig.dir
+      state <- localConfig.state
+    } tree.incoming.transition(dir.version, state)
   }
 }

@@ -1,5 +1,7 @@
 package salvo.tree
 
+import salvo.util._
+import java.io.{ File, FileFilter }
 import java.nio.file.{ Path, Paths }
 import org.apache.commons.io.FilenameUtils.{ getExtension, getBaseName }
 
@@ -8,13 +10,16 @@ object Dir {
   case object Incomplete extends State("incomplete")
   case object Ready extends State("ready")
   object State {
-    def apply(path: Path): Option[State] =
-      getExtension(path.getFileName().toString /* XXX: ??? */ ) match {
+    def apply(s: String): Option[State] =
+      s match {
         case ""             => None
         case Incomplete.ext => Some(Incomplete)
         case Ready.ext      => Some(Ready)
         case _              => None
       }
+
+    def apply(path: Path): Option[State] = State(getExtension(path.getFileName().toString /* XXX: ??? */ ))
+
     implicit object ordering extends Ordering[State] {
       def compare(x: State, y: State) =
         (x, y) match {
@@ -24,6 +29,8 @@ object Dir {
         }
     }
   }
+
+  def apply(file: File): Option[Dir] = apply(Paths.get(file.toURI))
 
   def apply(path: Path): Option[Dir] =
     for {
@@ -35,6 +42,31 @@ object Dir {
 
   def init(state: Dir.State = Incomplete) =
     Dir(version = Version.now(), state = state)
+
+  def list(root: Path)(version: Option[Version] = None): List[Dir] =
+    root.toFile.listFiles(new FileFilter {
+      def accept(elem: File) =
+        Dir(elem).exists(
+          d => directory(root.resolve(d.path))
+            && version.map(v => d.version == v).getOrElse(true))
+    }).foldLeft(List.empty[Dir])((dirs, elem) => Dir(elem).toList ::: dirs).sorted
+
+  def load(root: Path)(version: Version): Option[Dir] =
+    list(root)(Some(version)) match {
+      case dir :: Nil => Some(dir)
+      case Nil        => None
+      case dirs       => sys.error("more than one dir found with version "+version+": "+dirs.mkString(", "))
+    }
+
+  def transition(root: Path)(dir: Dir, state: Dir.State): Dir = {
+    val updated =
+      (dir.state, state) match {
+        case (Incomplete, Ready) => dir.copy(state = Ready)
+        case _                   => sys.error("can only transition from "+Incomplete+" to "+Ready)
+      }
+    root.resolve(dir.path).toFile.renameTo(root.resolve(updated.path).toFile)
+    updated
+  }
 }
 
 case class Dir(version: Version, state: Dir.State) {

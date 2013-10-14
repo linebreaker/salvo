@@ -1,7 +1,8 @@
 package salvo.cli
 
 import salvo.util._
-import salvo.tree.Tree
+import salvo.tree._
+import java.nio.file._
 
 trait Util {
   def validate(config: Config) = {
@@ -10,4 +11,7 @@ trait Util {
     tree.validate()
     tree
   }
+  import Dir.State
+  implicit val readsDir = scopt.Read.reads[Dir](s => Dir(Paths.get(s)).getOrElse(sys.error("could not parse '"+s+"' as a dir")))
+  implicit val readsState = scopt.Read.reads[State](s => State(s).getOrElse(sys.error("could not parse '"+s+"' as a state")))
 }
