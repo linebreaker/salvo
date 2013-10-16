@@ -18,7 +18,11 @@ object Dir {
         case _              => None
       }
 
-    def apply(path: Path): Option[State] = State(getExtension(path.getFileName().toString /* XXX: ??? */ ))
+    def apply(path: Path): Option[State] =
+      getExtension(path.getFileName().toString) match {
+        case ""  => Some(Ready)
+        case ext => State(ext)
+      }
 
     implicit object ordering extends Ordering[State] {
       def compare(x: State, y: State) =
@@ -70,5 +74,8 @@ object Dir {
 }
 
 case class Dir(version: Version, state: Dir.State) {
-  lazy val path = Paths.get(version+"."+state.ext)
+  lazy val path = Paths.get(state match {
+    case Dir.Incomplete => version+"."+state.ext
+    case Dir.Ready      => version.toString
+  })
 }

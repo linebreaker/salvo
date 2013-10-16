@@ -7,10 +7,10 @@ import Dir._
 class DirSpec extends Specification with TestUtils {
   "Dir model" should {
     "parse dir state" in {
-      State("whatever.ready") must beSome.which(_ == Ready)
-      State("whatever.incomplete") must beSome.which(_ == Incomplete)
-      State("whatever.invalid") must beNone
-      State("whatever") must beNone
+      State("ready") must beSome.which(_ == Ready)
+      State("incomplete") must beSome.which(_ == Incomplete)
+      State("invalid") must beNone
+      State("") must beNone
     }
     "parse whole directory" in {
       Dir("invalid") must beNone
@@ -18,6 +18,7 @@ class DirSpec extends Specification with TestUtils {
       Dir("1") must beNone
       Dir(validVersionString+".incomplete") must beSome.which(_ == Dir(version = validVersion, state = Incomplete))
       Dir(validVersionString+".ready") must beSome.which(_ == Dir(version = validVersion, state = Ready))
+      Dir(validVersionString) must beSome.which(_ == Dir(version = validVersion, state = Ready))
     }
     "sort directories correctly" in {
       val dirs = {

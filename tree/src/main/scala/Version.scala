@@ -29,12 +29,12 @@ object Version {
       minor = minor)
 
   def apply(version: String): Option[Version] = allCatch.opt {
-    val regex = """^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\.(\d+)$""".r
+    val regex = """^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})-(\d+)$""".r
     val regex(yyyy, mm, dd, hh, mi, ss, minor) = version
     init(yyyy.toLong, mm.toLong, dd.toLong, hh.toLong, mi.toLong, ss.toLong, minor.toLong)
   }
 }
 
 case class Version(major: Long, minor: Long) {
-  override lazy val toString = major+"."+minor
+  override lazy val toString = major+"-"+minor
 }
