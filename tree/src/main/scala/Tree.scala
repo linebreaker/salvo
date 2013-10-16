@@ -24,5 +24,5 @@ class Tree(val root: Path) {
     if (!directory(root)) sys.error("Root at "+root+" does not exist")
     incoming.init().validate()
   }
-  def /(dir: Dir): Path = root.resolve(dir.path).toAbsolutePath()
+  def /(dir: Dir): Path = root / dir.path
 }

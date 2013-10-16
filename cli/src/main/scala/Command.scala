@@ -45,7 +45,7 @@ object Init extends Command("init") with Util {
 object CreateVersion extends Command("create-version") with NilLocalConfig with Util {
   def apply(config: Config) {
     val tree = validate(config)
-    for (created <- tree.incoming.create()) println(tree / created)
+    for (created <- tree.incoming.create()) println(tree.incoming.dir / created.path)
   }
 }
 
