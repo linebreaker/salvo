@@ -36,7 +36,7 @@ object Dir {
 
   def apply(path: Path): Option[Dir] =
     for {
-      version <- Version(getBaseName(path.getFileName().toString))
+      version <- Version(path)
       state <- State(path)
     } yield Dir(version, state)
 

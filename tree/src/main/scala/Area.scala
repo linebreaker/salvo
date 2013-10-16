@@ -13,4 +13,5 @@ abstract class Area(dir: Path) {
   def tail() = new Tail(dir)
   def list(version: Option[Version] = None): List[Dir] = Dir.list(dir)(version)
   def apply(version: Version): Option[Dir] = Dir.load(dir)(version)
+  def /(path: Path) = dir / path
 }

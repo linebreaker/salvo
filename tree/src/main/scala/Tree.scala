@@ -28,4 +28,31 @@ class Tree(val root: Path) {
         }
       case _ => None
     }
+
+  def activate(version: Version): Option[Version] =
+    current() match {
+      case Some(Dir(activeVersion, _)) if activeVersion == version => Some(activeVersion)
+      case _ =>
+        history(version).flatMap {
+          case dir @ Dir(_, Dir.Ready) =>
+            current.delete()
+            current.create(history / dir.path)
+            Some(version)
+        } orElse (sys.error("unable to activate non-existent version "+version))
+    }
+
+  object current {
+    val link = root / "current"
+    def validate(): Boolean = symlink(link) && directory(link)
+    def create(path: Path) {
+      Files.createSymbolicLink(link, path.toAbsolutePath())
+    }
+    def delete() {
+      if (validate()) Files.delete(link)
+    }
+    def apply(): Option[Dir] =
+      if (validate())
+        allCatch.opt(Files.readSymbolicLink(link)).flatMap(Version(_)).flatMap(history(_))
+      else None
+  }
 }

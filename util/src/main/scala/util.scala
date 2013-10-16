@@ -1,15 +1,24 @@
 package salvo.util
 
+import java.security._
+import java.nio.file.{ Paths, Files }
+
 object `package` {
   type File = java.io.File
   type Path = java.nio.file.Path
 
-  implicit def fileToPath(file: File): Path = java.nio.file.Paths.get(file.toURI).toAbsolutePath()
+  val allCatch = scala.util.control.Exception.allCatch
+
+  val PWD = Paths.get("").toAbsolutePath()
+
+  implicit def fileToPath(file: File): Path = Paths.get(file.toURI).toAbsolutePath()
   implicit def pathToFile(path: Path): File = path.toAbsolutePath().toFile
 
   def exists(path: Path) = path.exists
 
   def directory(path: Path) = exists(path) && path.isDirectory
+
+  def symlink(path: Path) = Files.isSymbolicLink(path)
 
   def mkdir(path: Path): Option[Path] =
     if (directory(path)) None
@@ -29,4 +38,10 @@ object `package` {
     def /(other: File): Path = pimped / (other: Path)
     def /(other: String): Path = path.resolve(other).toAbsolutePath()
   }
+
+  def priv[T](op: => T): Either[Throwable, T] =
+    allCatch.either(
+      AccessController.doPrivileged(new PrivilegedAction[T] {
+        def run() = op
+      }))
 }

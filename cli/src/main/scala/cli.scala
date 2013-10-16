@@ -1,8 +1,8 @@
 package salvo.cli
 
-import java.nio.file._
+import salvo.util._
 
-case class Config(root: Path = Paths.get("").toAbsolutePath(), cmd: Option[Command] = None)
+case class Config(root: Path = PWD, cmd: Option[Command] = None)
 
 object Main {
   def main(argv: Array[String]) {

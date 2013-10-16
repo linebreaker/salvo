@@ -1,7 +1,9 @@
 package salvo.tree
 
+import salvo.util._
 import java.util.Calendar
 import scala.util.control.Exception.allCatch
+import org.apache.commons.io.FilenameUtils.getBaseName
 
 object Version {
   private val seed = System.nanoTime()
@@ -33,6 +35,8 @@ object Version {
     val regex(yyyy, mm, dd, hh, mi, ss, minor) = version
     init(yyyy.toLong, mm.toLong, dd.toLong, hh.toLong, mi.toLong, ss.toLong, minor.toLong)
   }
+
+  def apply(path: Path): Option[Version] = apply(getBaseName(path.getFileName().toString))
 }
 
 case class Version(major: Long, minor: Long) {
