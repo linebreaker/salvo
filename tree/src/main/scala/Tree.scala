@@ -17,4 +17,15 @@ class Tree(val root: Path) {
     incoming.validate()
     history.validate()
   }
+
+  def append(version: Version): Option[Version] =
+    incoming(version).flatMap {
+      case dir @ Dir(_, Dir.Ready) =>
+        history(version) match {
+          case Some(_) => sys.error(history+" already contains version "+version)
+          case _ =>
+            Some(version).filter(_ => mv(incoming.dir / dir.path, history.dir / dir.path))
+        }
+      case _ => None
+    }
 }

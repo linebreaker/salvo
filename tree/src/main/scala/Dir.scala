@@ -66,7 +66,7 @@ object Dir {
         case (Incomplete, Ready) => dir.copy(state = Ready)
         case _                   => sys.error("can only transition from "+Incomplete+" to "+Ready)
       }
-    (root / dir.path).renameTo(root / updated.path)
+    mv(root / dir.path, root / updated.path)
     updated
   }
 }

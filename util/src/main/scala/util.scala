@@ -21,6 +21,8 @@ object `package` {
 
   def mkdirOrElse(ignoreExisting: Boolean)(path: Path) = mkdir(path) orElse handleExisting(ignoreExisting)(path)
 
+  def mv(src: Path, dst: Path) = src.renameTo(dst)
+
   implicit def pimpPath(path: Path) = new {
     pimped =>
     def /(other: Path): Path = path.resolve(other).toAbsolutePath()
