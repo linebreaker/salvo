@@ -17,6 +17,4 @@ class Tree(val root: Path) {
     incoming.validate()
     history.validate()
   }
-
-  def /(dir: Dir): Path = root / dir.path
 }
