@@ -36,9 +36,7 @@ object Init extends Command("init") with Util {
     (parser.opt[Boolean]("ignore-existing") action localConfig.admit(localConfig.exists = _)) :: Nil
 
   def apply(config: Config) {
-    val mkdir = mkdirOrElse(localConfig.exists) _
-    mkdir(config.root)
-    mkdir(config.root.resolve("incoming"))
+    validate(config).init(ignoreExisting = localConfig.exists)
   }
 }
 

@@ -54,7 +54,12 @@ object BuildSettings {
       Some(Resolver.file("repo",
         if (v.trim.endsWith("SNAPSHOT")) repo / "snapshots"
         else repo / "releases"))
-    })
+    }),
+    resolvers ++= Seq(
+      "max's clubhouse - releases" at "https://raw.github.com/maxaf/repo/master/releases/",
+      "max's clubhouse - snapshots" at "https://raw.github.com/maxaf/repo/master/snapshots/",
+      "JBoss Thirdparty Releases" at "https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/"
+    )
   ) ++ scalariformSettings ++ formatSettings
 
   lazy val formatSettings = Seq(
@@ -88,9 +93,11 @@ object Deps {
   val commons_io = "commons-io" % "commons-io" % "2.4"
   val sqlite = "org.xerial" % "sqlite-jdbc" % "3.7.15-M1"
   val scopt = "com.github.scopt" %% "scopt" % "3.1.0"
+  val ttorrent = "com.turn" % "ttorrent" % "1.3-SNAPSHOT"
 
   val TreeDeps = Seq(scalaz, commons_io)
   val CoreDeps = Seq(sqlite)
+  val DistDeps = Seq(ttorrent)
   val CliDeps = Seq(scopt)
 }
 
@@ -101,7 +108,7 @@ object SalvoBuild extends Build {
   lazy val root = Project(
     id = "salvo", base = file("."),
     settings = buildSettings ++ Seq(publish := {})
-  ) aggregate(util, tree, core, cli)
+  ) aggregate(util, tree, core, dist, cli)
 
   lazy val util = Project(
     id = "salvo-util", base = file("util"),
@@ -117,6 +124,11 @@ object SalvoBuild extends Build {
     settings = buildSettings ++ Seq(libraryDependencies ++= CoreDeps)
   ) dependsOn(tree)
 
+  lazy val dist = Project(
+    id = "salvo-dist", base = file("dist"),
+    settings = buildSettings ++ Seq(libraryDependencies ++= DistDeps)
+  ) dependsOn(core)
+
   lazy val cli = Project(
     id = "salvo-cli", base = file("cli"),
     settings = buildSettings ++ Seq(libraryDependencies ++= CliDeps) ++ assemblySettings ++ Seq(
@@ -125,5 +137,5 @@ object SalvoBuild extends Build {
       jarName in assembly <<= (name, version) map { (n, v) => s"${n}-${v}.jar" },
       assemblyCacheUnzip in assembly := false,
       assemblyCacheOutput in assembly := false)
-  ) dependsOn(core)
+  ) dependsOn(core, dist)
 }
