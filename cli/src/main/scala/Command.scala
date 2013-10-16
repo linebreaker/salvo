@@ -23,12 +23,6 @@ trait NilLocalConfig {
   def init(parser: Parser) = Nil
 }
 
-object InitVersion extends Command("init-version") with NilLocalConfig {
-  def apply(config: Config) {
-    println(Version.now())
-  }
-}
-
 object Init extends Command("init") with Util {
   class InitLocalConfig(var exists: Boolean = false) extends LocalConfig
   val localConfig = new InitLocalConfig()
@@ -36,7 +30,7 @@ object Init extends Command("init") with Util {
     (parser.opt[Boolean]("ignore-existing") action localConfig.admit(localConfig.exists = _)) :: Nil
 
   def apply(config: Config) {
-    validate(config).init(ignoreExisting = localConfig.exists)
+    new Tree(config.root).init(ignoreExisting = localConfig.exists)
   }
 }
 
@@ -61,5 +55,27 @@ object TransitionVersion extends Command("transition-version") with Util {
       dir <- localConfig.dir
       state <- localConfig.state
     } tree.incoming.transition(dir.version, state)
+  }
+}
+
+object AppendVersion extends Command("append-version") with Util {
+  class LC(var dir: Option[Dir] = None) extends LocalConfig
+  val localConfig = new LC()
+  def init(parser: Parser) =
+    (parser.opt[Dir]("dir") action localConfig.admit(d => localConfig.dir = Some(d))) :: Nil
+  def apply(config: Config) {
+    val tree = validate(config)
+    for (dir <- localConfig.dir) tree.append(dir.version)
+  }
+}
+
+object ActivateVersion extends Command("activate-version") with Util {
+  class LC(var dir: Option[Dir] = None) extends LocalConfig
+  val localConfig = new LC()
+  def init(parser: Parser) =
+    (parser.opt[Dir]("dir") action localConfig.admit(d => localConfig.dir = Some(d))) :: Nil
+  def apply(config: Config) {
+    val tree = validate(config)
+    for (dir <- localConfig.dir) tree.activate(dir.version)
   }
 }
