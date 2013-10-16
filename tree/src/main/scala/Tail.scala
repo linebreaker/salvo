@@ -1,14 +1,15 @@
 package salvo.tree
 
+import salvo.util._
 import java.nio.file.{ Path, StandardWatchEventKinds, WatchEvent, WatchKey, WatchService }
 import StandardWatchEventKinds._
 import scala.collection.JavaConversions._
 import scalaz._
 import Scalaz._
 
-class IncomingDirs(val dir: Path) {
+class Tail(val dir: Path) {
   def validate() {
-    if (!dir.toFile.isDirectory) sys.error("%s doesn't exist or isn't a directory".format(dir))
+    if (!directory(dir)) sys.error("%s doesn't exist or isn't a directory".format(dir))
   }
 
   private var _watcher = Option.empty[WatchService]
@@ -47,8 +48,7 @@ class IncomingDirs(val dir: Path) {
   private def parse(_evt: WatchEvent[_]): Option[Dir] =
     for {
       new_evt <- coerce[Path](_.kind() == ENTRY_CREATE)(_evt)
-      path = dir.resolve(new_evt.context())
-      dir <- Dir(path)
+      dir <- Dir(dir / new_evt.context())
     } yield dir
 
   def poll() = Option(watcher.poll()).toList.flatMap(parse(_))

@@ -2,7 +2,7 @@ package salvo.tree
 
 import salvo.util._
 import java.io.{ File, FileFilter }
-import java.nio.file.{ Path, Paths }
+import java.nio.file.Paths
 import org.apache.commons.io.FilenameUtils.{ getExtension, getBaseName }
 
 object Dir {
@@ -34,8 +34,6 @@ object Dir {
     }
   }
 
-  def apply(file: File): Option[Dir] = apply(Paths.get(file.toURI))
-
   def apply(path: Path): Option[Dir] =
     for {
       version <- Version(getBaseName(path.getFileName().toString))
@@ -48,10 +46,10 @@ object Dir {
     Dir(version = Version.now(), state = state)
 
   def list(root: Path)(version: Option[Version] = None): List[Dir] =
-    root.toFile.listFiles(new FileFilter {
+    root.listFiles(new FileFilter {
       def accept(elem: File) =
         Dir(elem).exists(
-          d => directory(root.resolve(d.path))
+          d => directory(root / d.path)
             && version.map(v => d.version == v).getOrElse(true))
     }).foldLeft(List.empty[Dir])((dirs, elem) => Dir(elem).toList ::: dirs).sorted
 
@@ -68,7 +66,7 @@ object Dir {
         case (Incomplete, Ready) => dir.copy(state = Ready)
         case _                   => sys.error("can only transition from "+Incomplete+" to "+Ready)
       }
-    root.resolve(dir.path).toFile.renameTo(root.resolve(updated.path).toFile)
+    (root / dir.path).renameTo(root / updated.path)
     updated
   }
 }

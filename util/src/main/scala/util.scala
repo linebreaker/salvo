@@ -1,16 +1,19 @@
 package salvo.util
 
-import java.io._
-import java.nio.file._
-
 object `package` {
-  def exists(path: Path) = path.toFile.exists
+  type File = java.io.File
+  type Path = java.nio.file.Path
 
-  def directory(path: Path) = exists(path) && path.toFile.isDirectory
+  implicit def fileToPath(file: File): Path = java.nio.file.Paths.get(file.toURI).toAbsolutePath()
+  implicit def pathToFile(path: Path): File = path.toAbsolutePath().toFile
+
+  def exists(path: Path) = path.exists
+
+  def directory(path: Path) = exists(path) && path.isDirectory
 
   def mkdir(path: Path): Option[Path] =
     if (directory(path)) None
-    else Some(path).filter(_ => path.toFile.mkdirs())
+    else Some(path).filter(_ => path.mkdirs())
 
   def handleExisting(ignoreExisting: Boolean)(path: Path) =
     if (ignoreExisting) Option(path)
@@ -19,8 +22,9 @@ object `package` {
   def mkdirOrElse(ignoreExisting: Boolean)(path: Path) = mkdir(path) orElse handleExisting(ignoreExisting)(path)
 
   implicit def pimpPath(path: Path) = new {
-    def /(other: Path) = path.resolve(other).toAbsolutePath()
-    def /(other: File) = path.resolve(Paths.get(other.toURI)).toAbsolutePath()
-    def /(other: String) = path.resolve(other).toAbsolutePath()
+    pimped =>
+    def /(other: Path): Path = path.resolve(other).toAbsolutePath()
+    def /(other: File): Path = pimped / (other: Path)
+    def /(other: String): Path = path.resolve(other).toAbsolutePath()
   }
 }
