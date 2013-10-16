@@ -1,6 +1,7 @@
 package salvo.tree.test
 
 import org.specs2.mutable._
+import salvo.util._
 import salvo.tree._
 import Dir._
 
@@ -38,6 +39,18 @@ class DirSpec extends Specification with TestUtils {
           Dir(version = validVersion, state = Incomplete) ::
           Dir(version = validVersion, state = Incomplete) ::
           Nil
+      }
+    }
+    "transition directories" in new After {
+      val version = Version.now()
+      object incoming extends Incoming(tempDir())
+      incoming.create(version, state = Dir.Incomplete)
+      incoming(version) must beSome[Dir].which(_ == Dir(version, state = Dir.Incomplete))
+      incoming.transition(version, state = Dir.Ready)
+      incoming(version) must beSome[Dir].which(_ == Dir(version, state = Dir.Ready))
+      def after = {
+        import org.apache.commons.io.FileUtils.deleteDirectory
+        deleteDirectory(incoming.dir)
       }
     }
   }

@@ -26,14 +26,10 @@ class TailSpec extends Specification with TestUtils {
   }
 }
 
-object TailSpec {
+object TailSpec extends TestUtils {
   trait ctx extends After {
     lazy val tail = {
-      val tail = new Tail({
-        val dir = Files.createTempDirectory(Paths.get("/tmp"), classOf[TailSpec].getSimpleName+".")
-        dir.mkdirs()
-        dir
-      })
+      val tail = new Tail(tempDir)
       println("spawning Tail in %s".format(tail.dir))
       tail.start()
       tail
