@@ -27,7 +27,7 @@ class TailSpec extends Specification with TestUtils {
 }
 
 object TailSpec extends TestUtils {
-  trait ctx extends After {
+  trait ctx extends UsingTempDir {
     lazy val tail = {
       val tail = new Tail(tempDir)
       println("spawning Tail in %s".format(tail.dir))
@@ -48,10 +48,8 @@ object TailSpec extends TestUtils {
         }
       if (satisfied) Some(f(dirs)) else None
     }
-    def after {
+    override def cleanup() {
       tail.stop()
-      deleteDirectory(tail.dir)
-      println("cleaned up %s".format(tail.dir))
     }
   }
   class NnewDirs(n: Int) {

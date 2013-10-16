@@ -41,17 +41,13 @@ class DirSpec extends Specification with TestUtils {
           Nil
       }
     }
-    "transition directories" in new After {
+    "transition directories" in new UsingTempDir {
       val version = Version.now()
-      object incoming extends Incoming(tempDir())
+      object incoming extends Incoming(tempDir)
       incoming.create(version, state = Dir.Incomplete)
       incoming(version) must beSome[Dir].which(_ == Dir(version, state = Dir.Incomplete))
       incoming.transition(version, state = Dir.Ready)
       incoming(version) must beSome[Dir].which(_ == Dir(version, state = Dir.Ready))
-      def after = {
-        import org.apache.commons.io.FileUtils.deleteDirectory
-        deleteDirectory(incoming.dir)
-      }
     }
   }
 }
