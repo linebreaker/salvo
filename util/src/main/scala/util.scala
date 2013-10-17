@@ -44,4 +44,10 @@ object `package` {
       AccessController.doPrivileged(new PrivilegedAction[T] {
         def run() = op
       }))
+
+  def useAndReturn[A, B](resource0: => A)(op: A => B): A = {
+    val resource = resource0
+    op(resource)
+    resource
+  }
 }

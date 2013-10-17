@@ -4,8 +4,9 @@ import salvo.util._
 import salvo.tree._
 import com.turn.ttorrent.common.{ Torrent => TTorrent }
 import com.turn.ttorrent.client.{ SharedTorrent, Client }
+import com.turn.ttorrent.tracker.{ Tracker, TrackedTorrent }
 import scala.collection.JavaConversions._
-import java.net.{ URI, InetAddress }
+import java.net.{ URI, InetAddress, InetSocketAddress }
 import java.io.FileOutputStream
 
 class Dist(val tree: Tree, trackers: List[URI] = Nil) {
@@ -29,6 +30,8 @@ class Dist(val tree: Tree, trackers: List[URI] = Nil) {
     def save() = underlying.save(new FileOutputStream(file))
     def shared() = new SharedTorrent(underlying, tree.history.dir, dist.seed_?(version))
     def client(addr: InetAddress = InetAddress.getLocalHost()) = new Client(addr, shared())
+    def seed() =
+      useAndReturn(new Tracker(new InetSocketAddress(0)))(_.announce(new TrackedTorrent(underlying)))
   }
 
   def apply(version: Version) = tree.history(version).map(tree.history / _.path)

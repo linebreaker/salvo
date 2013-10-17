@@ -4,6 +4,7 @@ import scopt.OptionDef
 import java.nio.file._
 import salvo.util._
 import salvo.tree._
+import salvo.dist._
 
 abstract class Command(val name: String) extends (Config => Unit) {
   abstract class LocalConfig {
@@ -45,8 +46,8 @@ object TransitionVersion extends Command("transition-version") with Util {
   class LC(var dir: Option[Dir] = None, var state: Option[Dir.State] = None) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) = {
-    (parser.opt[Dir]("dir") action localConfig.admit(d => localConfig.dir = Some(d))) ::
-      (parser.opt[Dir.State]("state") action localConfig.admit(s => localConfig.state = Some(s))) :: Nil
+    (parser.opt[Dir]("dir") required () action localConfig.admit(d => localConfig.dir = Some(d))) ::
+      (parser.opt[Dir.State]("state") required () action localConfig.admit(s => localConfig.state = Some(s))) :: Nil
   }
   def apply(config: Config) {
     val tree = validate(config)
@@ -62,7 +63,7 @@ object AppendVersion extends Command("append-version") with Util {
   class LC(var dir: Option[Dir] = None) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) =
-    (parser.opt[Dir]("dir") action localConfig.admit(d => localConfig.dir = Some(d))) :: Nil
+    (parser.opt[Dir]("dir") required () action localConfig.admit(d => localConfig.dir = Some(d))) :: Nil
   def apply(config: Config) {
     val tree = validate(config)
     for (dir <- localConfig.dir) tree.append(dir.version)
@@ -73,9 +74,29 @@ object ActivateVersion extends Command("activate-version") with Util {
   class LC(var dir: Option[Dir] = None) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) =
-    (parser.opt[Dir]("dir") action localConfig.admit(d => localConfig.dir = Some(d))) :: Nil
+    (parser.opt[Dir]("dir") required () action localConfig.admit(d => localConfig.dir = Some(d))) :: Nil
   def apply(config: Config) {
     val tree = validate(config)
     for (dir <- localConfig.dir) tree.activate(dir.version)
+  }
+}
+
+object SeedVersion extends Command("seed-version") with Util {
+  class LC(var version: Option[Version] = None) extends LocalConfig
+  val localConfig = new LC()
+  def init(parser: Parser) =
+    (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) :: Nil
+  def apply(config: Config) {
+    val tree = validate(config)
+    val dist = new Dist(tree)
+    for {
+      version <- localConfig.version
+      torrent <- dist.torrent(version)
+    } {
+      torrent.save()
+      val tracker = torrent.seed()
+      tracker.start()
+      tracker.stop()
+    }
   }
 }

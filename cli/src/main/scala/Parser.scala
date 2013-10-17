@@ -9,7 +9,7 @@ class Parser extends scopt.OptionParser[Config]("salvo") {
   def command[C <: Command](c: C) =
     cmd(c.name) action ((_, config) => config.copy(cmd = Some(c))) children (c.init(this): _*)
 
-  opt[File]("root") abbr ("r") text ("root of salvo directory structure") action (
+  opt[File]("root") abbr ("r") text ("root of salvo directory structure") required () action (
     (r, c) => c.copy(root = r))
 
   help("help")
@@ -19,4 +19,5 @@ class Parser extends scopt.OptionParser[Config]("salvo") {
   command(TransitionVersion)
   command(AppendVersion)
   command(ActivateVersion)
+  command(SeedVersion)
 }
