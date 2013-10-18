@@ -29,9 +29,26 @@ class Dist(val tree: Tree, trackers: List[URI] = Nil) {
     val file = dir / (version+".torrent")
     def save() = underlying.save(new FileOutputStream(file))
     def shared() = new SharedTorrent(underlying, tree.history.dir, dist.seed_?(version))
-    def client(addr: InetAddress = InetAddress.getLocalHost()) = new Client(addr, shared())
-    def seed() =
+    def client(addr: InetAddress = InetAddress.getByName("0.0.0.0")) = new Client(addr, shared())
+    def tracker() =
       useAndReturn(new Tracker(new InetSocketAddress(0)))(_.announce(new TrackedTorrent(underlying)))
+    def seed(duration: Int) = Seed(tracker(), client(), duration)
+  }
+
+  case class Seed(tracker: Tracker, client: Client, duration: Int) {
+    import Client.ClientState._
+    def finished_? = client.getState() match {
+      case SHARING | SEEDING | WAITING => false
+      case _                           => true
+    }
+    def start() {
+      tracker.start()
+      client.share(duration)
+    }
+    def stop() {
+      client.stop()
+      tracker.stop()
+    }
   }
 
   def apply(version: Version) = tree.history(version).map(tree.history / _.path)

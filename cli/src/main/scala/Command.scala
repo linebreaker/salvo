@@ -82,10 +82,13 @@ object ActivateVersion extends Command("activate-version") with Util {
 }
 
 object SeedVersion extends Command("seed-version") with Util {
-  class LC(var version: Option[Version] = None) extends LocalConfig
+  class LC(var version: Option[Version] = None, var duration: Int = 3600) extends LocalConfig
   val localConfig = new LC()
-  def init(parser: Parser) =
-    (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) :: Nil
+  def init(parser: Parser) = {
+    (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) ::
+      (parser.opt[Int]("duration") action localConfig.admit(d => localConfig.duration = d)) ::
+      Nil
+  }
   def apply(config: Config) {
     val tree = validate(config)
     val dist = new Dist(tree)
@@ -93,10 +96,16 @@ object SeedVersion extends Command("seed-version") with Util {
       version <- localConfig.version
       torrent <- dist.torrent(version)
     } {
-      torrent.save()
-      val tracker = torrent.seed()
-      tracker.start()
-      tracker.stop()
+      val seed = torrent.seed(localConfig.duration)
+      println("created seed: "+seed)
+      seed.start()
+      while (!seed.finished_?) {
+        println("seed state: "+seed.client.getState)
+        Thread.sleep(1000L)
+      }
+      seed.client.waitForCompletion()
+      println("stopping seed")
+      seed.stop()
     }
   }
 }
