@@ -2,14 +2,14 @@ package salvo.dist
 
 import salvo.util._
 import salvo.tree._
-import com.turn.ttorrent.common.{ Torrent => TTorrent }
+import com.turn.ttorrent.common.Torrent
 import com.turn.ttorrent.client.{ SharedTorrent, Client }
 import com.turn.ttorrent.tracker.{ Tracker, TrackedTorrent }
 import scala.collection.JavaConversions._
-import java.net.{ URI, InetAddress, InetSocketAddress }
+import java.net.{ URI, InetAddress, InetSocketAddress, ServerSocket }
 import java.io.FileOutputStream
 
-class Dist(val tree: Tree, trackers: List[URI] = Nil) {
+class Dist(val tree: Tree) {
   dist =>
 
   lazy val dir = tree.root / "torrents"
@@ -25,45 +25,65 @@ class Dist(val tree: Tree, trackers: List[URI] = Nil) {
     if (!directory(dir)) sys.error("Torrents dir at "+dir+" does not exist")
   }
 
-  case class Torrent(version: Version, underlying: TTorrent) {
-    val file = dir / (version+".torrent")
-    def save() = underlying.save(new FileOutputStream(file))
-    def shared() = new SharedTorrent(underlying, tree.history.dir, dist.seed_?(version))
-    def client(addr: InetAddress = InetAddress.getByName("0.0.0.0")) = new Client(addr, shared())
-    def tracker() =
-      useAndReturn(new Tracker(new InetSocketAddress(0)))(_.announce(new TrackedTorrent(underlying)))
-    def seed(duration: Int) = Seed(tracker(), client(), duration)
+  object Tracker {
+    def apply(port: Int): List[Tracker] = addrs().filter(ipv4_?).map(addr => new Tracker(new InetSocketAddress(addr, port)))
   }
 
-  case class Seed(tracker: Tracker, client: Client, duration: Int) {
+  def finished_?(client: Client) = {
     import Client.ClientState._
-    def finished_? = client.getState() match {
+    client.getState() match {
       case SHARING | SEEDING | WAITING => false
       case _                           => true
     }
+  }
+
+  case class Seed(version: Version, duration: Int = 3600, addr: InetAddress = oneAddr(ipv4_?), port: Int = new ServerSocket(0).getLocalPort()) {
+    val trackers = Tracker(port)
+
+    val torrent = dist(version).map {
+      source =>
+        Torrent.create(
+          source,
+          tree.history.list(version),
+          seqAsJavaList(trackers.map(_.getAnnounceUrl().toURI)) :: Nil,
+          "salvo/"+System.getProperty("user.name"))
+    }.getOrElse(sys.error("???"))
+
+    val file = dir / (version+".torrent")
+    torrent.save(new FileOutputStream(file))
+
+    val shared = new SharedTorrent(torrent, tree.history.dir, true)
+    val client = new Client(addr, shared)
+
+    val tracked = new TrackedTorrent(torrent)
+    for (tracker <- trackers) tracker.announce(tracked)
+
     def start() {
-      tracker.start()
+      for (tracker <- trackers) tracker.start()
       client.share(duration)
+    }
+
+    def stop() {
+      client.stop()
+      for (tracker <- trackers) tracker.stop()
+    }
+  }
+
+  case class Leech(version: Version, addr: InetAddress = oneAddr(ipv4_?)) {
+    val file = dir / (version+".torrent")
+    val torrent = Torrent.load(file)
+    val dest = tree.incoming / tree.incoming.create(version).map(_.path).getOrElse(sys.error("???"))
+    val shared = new SharedTorrent(torrent, dest, false)
+    val client = new Client(addr, shared)
+    def start() {
+      client.download()
     }
     def stop() {
       client.stop()
-      tracker.stop()
     }
   }
 
   def apply(version: Version) = tree.history(version).map(tree.history / _.path)
-
-  def torrent(version: Version): Option[Torrent] =
-    this(version).map {
-      source =>
-        Torrent(
-          version = version,
-          underlying = TTorrent.create(
-            source,
-            tree.history.list(version),
-            seqAsJavaList(seqAsJavaList(trackers) :: Nil),
-            System.getProperty("user.name")))
-    }
 
   def seed_?(version: Version) = tree.history(version).nonEmpty
 }

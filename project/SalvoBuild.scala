@@ -93,11 +93,16 @@ object Deps {
   val commons_io = "commons-io" % "commons-io" % "2.4"
   val sqlite = "org.xerial" % "sqlite-jdbc" % "3.7.15-M1"
   val scopt = "com.github.scopt" %% "scopt" % "3.1.0"
-  val ttorrent = "com.turn" % "ttorrent" % "1.3-SNAPSHOT"
+  val ttorrent = "com.turn" % "ttorrent" % "1.3-SNAPSHOT" intransitive()
+  val commons_codec = "commons-codec" % "commons-codec" % "1.8"
+  val simpleframework = "org.simpleframework" % "simple" % "4.1.21"
+  val jargs = "net.sf" % "jargs" % "1.0"
+  val slf4j_api = "org.slf4j" % "slf4j-api" % "1.6.4"
+  val slf4j_simple = "org.slf4j" % "slf4j-simple" % "1.6.4"
 
   val TreeDeps = Seq(scalaz, commons_io)
   val CoreDeps = Seq(sqlite)
-  val DistDeps = Seq(ttorrent)
+  val DistDeps = Seq(ttorrent, commons_codec, commons_io, jargs, simpleframework, slf4j_api, slf4j_simple)
   val CliDeps = Seq(scopt)
 }
 

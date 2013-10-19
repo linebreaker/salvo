@@ -92,20 +92,40 @@ object SeedVersion extends Command("seed-version") with Util {
   def apply(config: Config) {
     val tree = validate(config)
     val dist = new Dist(tree)
-    for {
-      version <- localConfig.version
-      torrent <- dist.torrent(version)
-    } {
-      val seed = torrent.seed(localConfig.duration)
+    for (version <- localConfig.version) {
+      val seed = dist.Seed(version, localConfig.duration)
       println("created seed: "+seed)
       seed.start()
-      while (!seed.finished_?) {
-        println("seed state: "+seed.client.getState)
+      while (!dist.finished_?(seed.client)) {
+        println("[ "+seed.trackers.map(_.getAnnounceUrl()).mkString(", ")+" ] seed state: "+seed.client.getState)
         Thread.sleep(1000L)
       }
       seed.client.waitForCompletion()
       println("stopping seed")
       seed.stop()
+    }
+  }
+}
+
+object LeechVersion extends Command("leech-version") with Util {
+  class LC(var version: Option[Version] = None, var duration: Int = 3600) extends LocalConfig
+  val localConfig = new LC()
+  def init(parser: Parser) =
+    (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) :: Nil
+  def apply(config: Config) {
+    val tree = validate(config)
+    val dist = new Dist(tree)
+    for (version <- localConfig.version) {
+      val leech = dist.Leech(version)
+      println("created leech: "+leech)
+      leech.start()
+      while (!dist.finished_?(leech.client)) {
+        println("leech state: "+leech.client.getState)
+        Thread.sleep(1000L)
+      }
+      leech.client.waitForCompletion()
+      println("stopping leech")
+      leech.stop()
     }
   }
 }

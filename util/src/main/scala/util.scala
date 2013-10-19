@@ -2,6 +2,8 @@ package salvo.util
 
 import java.security._
 import java.nio.file.{ Paths, Files }
+import java.net.{ InetAddress, NetworkInterface }
+import scala.collection.JavaConversions._
 
 object `package` {
   type File = java.io.File
@@ -49,5 +51,16 @@ object `package` {
     val resource = resource0
     op(resource)
     resource
+  }
+
+  def ifaces() = {
+      def filter(iface: NetworkInterface) = !iface.isLoopback && iface.isUp && !iface.isVirtual
+    NetworkInterface.getNetworkInterfaces.filter(filter).toList
+  }
+  def addrs() = ifaces().flatMap(_.getInetAddresses())
+  def ipv4_?(addr: InetAddress) = addr.getAddress().size == 4
+  def oneAddr(f: InetAddress => Boolean) = addrs.filter(f) match {
+    case one :: Nil => one
+    case more       => sys.error("wanted only one addr but found "+more)
   }
 }
