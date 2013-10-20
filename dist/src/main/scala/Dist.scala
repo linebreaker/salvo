@@ -70,14 +70,14 @@ class Dist(val tree: Tree) {
     }
   }
 
-  case class Leech(version: Version, addr: InetAddress = oneAddr(ipv4_?)) {
+  case class Leech(version: Version, duration: Int = 3600, addr: InetAddress = oneAddr(ipv4_?)) {
     val file = dir / (version+".torrent")
     val torrent = Torrent.load(file)
     val dest = tree.incoming / tree.incoming.create(version).map(_.path).getOrElse(sys.error("???"))
     val shared = new SharedTorrent(torrent, dest, false)
     val client = new Client(addr, shared)
     def start() {
-      client.download()
+      client.share(duration)
     }
     def stop() {
       client.stop()
