@@ -5,7 +5,6 @@ import java.nio.file._
 import salvo.util._
 import salvo.tree._
 import salvo.dist._
-import org.apache.commons.io.FileUtils.moveToDirectory
 
 abstract class Command(val name: String) extends (Config => Unit) {
   abstract class LocalConfig {
@@ -132,7 +131,9 @@ object LeechVersion extends Command("leech-version") with Util with Logging {
       leech.client.waitForCompletion()
       logger.info("stopping leech")
       leech.stop()
-      // XXX: move files!
+      leech.move()
+      tree.incoming.transition(version, Dir.Ready)
+      tree.append(version)
       logger.info("starting secondary seed")
       val seed = leech.seed(localConfig.duration)
       logger.info("created secondary seed: "+seed)

@@ -19,13 +19,10 @@ trait SeedOps {
       source =>
         Torrent.create(
           source,
-          tree.history.list(version),
+          tree.history.contents(version),
           seqAsJavaList(trackerURIs) :: Nil,
           "salvo/"+System.getProperty("user.name"))
     }.getOrElse(sys.error("???"))
-
-    lazy val file = useAndReturn(dir / (version+".torrent"))(
-      f => torrent.save(new FileOutputStream(f)))
 
     lazy val shared = new SharedTorrent(torrent, tree.history.dir, true)
     lazy val client = new Client(addr, shared)
@@ -43,13 +40,18 @@ trait SeedOps {
     }
   }
 
-  class PrimarySeed(version: Version, duration: Int = 3600, addr: InetAddress = oneAddr(ipv4_?), port: Int = new ServerSocket(0).getLocalPort()) extends Seed(version, duration, addr) {
+  class PrimarySeed(version: Version, duration: Int = 3600, addr: InetAddress = oneAddr(ipv4_?), port: Int = new ServerSocket(0).getLocalPort()) extends Seed(version, duration, addr) with Logging {
     protected lazy val trackers = addrs().filter(ipv4_?).map(addr => new Tracker(new InetSocketAddress(addr, port)))
     lazy val trackerURIs = trackers.map(_.getAnnounceUrl().toURI)
-    lazy val tracked = useAndReturn(new TrackedTorrent(torrent))(
-      tt => trackers.foreach(tracker => tracker.announce(tt)))
+    val file = dir / (version+".torrent")
     protected def preStart() {
-      for (tracker <- trackers) tracker.start()
+      torrent.save(new FileOutputStream(file))
+      for (tracker <- trackers) {
+        logger.info("starting tracker: "+tracker.getAnnounceUrl())
+        tracker.start()
+      }
+      useAndReturn(new TrackedTorrent(torrent))(
+        tt => trackers.foreach(tracker => tracker.announce(tt)))
     }
     protected def postStop() {
       for (tracker <- trackers) tracker.stop()
