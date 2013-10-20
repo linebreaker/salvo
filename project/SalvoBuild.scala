@@ -132,6 +132,9 @@ object SalvoBuild extends Build {
     settings = buildSettings ++ Seq(libraryDependencies ++= DistDeps)
   ) dependsOn(core)
 
+  lazy val executableName = settingKey[String]("name of executable bundle")
+  lazy val executable = taskKey[File]("create executable bundle from assembly JAR")
+
   lazy val cli = Project(
     id = "salvo-cli", base = file("cli"),
     settings = buildSettings ++ Seq(libraryDependencies ++= CliDeps) ++ assemblySettings ++ Seq(
@@ -139,6 +142,28 @@ object SalvoBuild extends Build {
       test in assembly := {},
       jarName in assembly <<= (name, version) map { (n, v) => s"${n}-${v}.jar" },
       assemblyCacheUnzip in assembly := false,
-      assemblyCacheOutput in assembly := false)
+      assemblyCacheOutput in assembly := false,
+      executableName := "salvo",
+      executable := {
+        val exe = file(executableName.value)
+        IO.writeLines(file = exe, lines = "#!java -jar" :: Nil, append = false)
+        import java.io.{FileInputStream, FileOutputStream}
+        IO.transferAndClose(
+          in = new FileInputStream(assembly.value),
+          out = new FileOutputStream(exe, true))
+        import java.util.HashSet
+        import java.nio.file.{Files, Paths}
+        import java.nio.file.attribute.PosixFilePermission
+        val perms = new HashSet[PosixFilePermission]()
+        perms.add(PosixFilePermission.OWNER_READ)
+        perms.add(PosixFilePermission.OWNER_WRITE)
+        perms.add(PosixFilePermission.OWNER_EXECUTE)
+        perms.add(PosixFilePermission.GROUP_READ)
+        perms.add(PosixFilePermission.GROUP_EXECUTE)
+        perms.add(PosixFilePermission.OTHERS_READ)
+        perms.add(PosixFilePermission.OTHERS_EXECUTE)
+        Files.setPosixFilePermissions(Paths.get(exe.toURI), perms)
+        exe
+      })
   ) dependsOn(dist)
 }
