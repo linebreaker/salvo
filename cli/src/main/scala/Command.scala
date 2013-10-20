@@ -93,11 +93,11 @@ object SeedVersion extends Command("seed-version") with Util with Logging {
     val tree = validate(config)
     val dist = new Dist(tree)
     for (version <- localConfig.version) {
-      val seed = dist.Seed(version, localConfig.duration)
+      val seed = new dist.PrimarySeed(version, localConfig.duration)
       logger.info("created seed: "+seed)
       seed.start()
       while (!dist.finished_?(seed.client)) {
-        logger.info("[ "+seed.trackers.map(_.getAnnounceUrl()).mkString(", ")+" ] seed state: "+seed.client.getState)
+        logger.info("[ "+seed.trackerURIs.mkString(", ")+" ] seed state: "+seed.client.getState)
         Thread.sleep(1000L)
       }
       seed.client.waitForCompletion()
@@ -118,19 +118,27 @@ object LeechVersion extends Command("leech-version") with Util with Logging {
     val tree = validate(config)
     val dist = new Dist(tree)
     for (version <- localConfig.version) {
-      val leech = dist.Leech(version, localConfig.duration)
+      val leech = new dist.Leech(version)
       logger.info("created leech: "+leech)
       leech.start()
-        def wait() {
-          while (!dist.finished_?(leech.client)) {
-            logger.info("leech state: "+leech.client.getState+" ("+"%.2f".format(leech.client.getTorrent.getCompletion())+"% complete)")
+        def wait(client: com.turn.ttorrent.client.Client) {
+          while (!dist.finished_?(client)) {
+            logger.info("client state: "+client.getState+" ("+"%.2f".format(client.getTorrent.getCompletion())+"% complete)")
             Thread.sleep(1000L)
           }
         }
-      wait()
+      wait(leech.client)
       leech.client.waitForCompletion()
       logger.info("stopping leech")
       leech.stop()
+      // XXX: move files!
+      logger.info("starting secondary seed")
+      val seed = leech.seed(localConfig.duration)
+      logger.info("created secondary seed: "+seed)
+      seed.start()
+      wait(seed.client)
+      seed.client.waitForCompletion()
+      seed.stop()
     }
   }
 }
