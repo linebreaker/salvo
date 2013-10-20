@@ -5,6 +5,7 @@ import java.nio.file._
 import salvo.util._
 import salvo.tree._
 import salvo.dist._
+import org.apache.commons.io.FileUtils.moveToDirectory
 
 abstract class Command(val name: String) extends (Config => Unit) {
   abstract class LocalConfig {

@@ -2,11 +2,7 @@ package salvo.dist
 
 import salvo.util._
 import salvo.tree._
-import com.turn.ttorrent.common.Torrent
-import com.turn.ttorrent.client.{ SharedTorrent, Client }
-import scala.collection.JavaConversions._
-import java.net.{ URI, InetAddress, InetSocketAddress }
-import org.apache.commons.io.FileUtils.moveToDirectory
+import com.turn.ttorrent.client.Client
 
 class Dist(val tree: Tree) extends SeedOps with LeechOps {
   dist =>
