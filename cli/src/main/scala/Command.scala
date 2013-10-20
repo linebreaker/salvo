@@ -81,7 +81,7 @@ object ActivateVersion extends Command("activate-version") with Util {
   }
 }
 
-object SeedVersion extends Command("seed-version") with Util {
+object SeedVersion extends Command("seed-version") with Util with Logging {
   class LC(var version: Option[Version] = None, var duration: Int = 3600) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) = {
@@ -94,20 +94,20 @@ object SeedVersion extends Command("seed-version") with Util {
     val dist = new Dist(tree)
     for (version <- localConfig.version) {
       val seed = dist.Seed(version, localConfig.duration)
-      println("created seed: "+seed)
+      logger.info("created seed: "+seed)
       seed.start()
       while (!dist.finished_?(seed.client)) {
-        println("[ "+seed.trackers.map(_.getAnnounceUrl()).mkString(", ")+" ] seed state: "+seed.client.getState)
+        logger.info("[ "+seed.trackers.map(_.getAnnounceUrl()).mkString(", ")+" ] seed state: "+seed.client.getState)
         Thread.sleep(1000L)
       }
       seed.client.waitForCompletion()
-      println("stopping seed")
+      logger.info("stopping seed")
       seed.stop()
     }
   }
 }
 
-object LeechVersion extends Command("leech-version") with Util {
+object LeechVersion extends Command("leech-version") with Util with Logging {
   class LC(var version: Option[Version] = None, var duration: Int = 3600) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) =
@@ -117,14 +117,15 @@ object LeechVersion extends Command("leech-version") with Util {
     val dist = new Dist(tree)
     for (version <- localConfig.version) {
       val leech = dist.Leech(version)
-      println("created leech: "+leech)
+      logger.info("created leech: "+leech)
       leech.start()
       while (!dist.finished_?(leech.client)) {
-        println("leech state: "+leech.client.getState)
+        logger.info("leech state: "+leech.client.getState+" ("+"%.2f".format(leech.client.getTorrent.getCompletion())+"% complete)")
         Thread.sleep(1000L)
       }
+      logger.info("leech event loop done with state "+leech.client.getState())
       leech.client.waitForCompletion()
-      println("stopping leech")
+      logger.info("stopping leech")
       leech.stop()
     }
   }

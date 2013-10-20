@@ -8,6 +8,7 @@ import com.turn.ttorrent.tracker.{ Tracker, TrackedTorrent }
 import scala.collection.JavaConversions._
 import java.net.{ URI, InetAddress, InetSocketAddress, ServerSocket }
 import java.io.FileOutputStream
+import org.apache.commons.io.FileUtils.moveToDirectory
 
 class Dist(val tree: Tree) {
   dist =>
@@ -32,8 +33,8 @@ class Dist(val tree: Tree) {
   def finished_?(client: Client) = {
     import Client.ClientState._
     client.getState() match {
-      case SHARING | SEEDING | WAITING => false
-      case _                           => true
+      case SHARING | SEEDING | WAITING | VALIDATING => false
+      case _                                        => true
     }
   }
 
