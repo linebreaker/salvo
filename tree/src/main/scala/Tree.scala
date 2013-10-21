@@ -1,11 +1,14 @@
 package salvo.tree
 
-import java.nio.file._
+import java.nio.file.Files
 import salvo.util._
 
 class Tree(val root: Path) {
   object incoming extends Incoming(root / "incoming")
-  object history extends History(root / "history")
+
+  object history extends History(root / "history") {
+    def tail() = new VersionTail(dir)
+  }
 
   def init(ignoreExisting: Boolean = false) {
     incoming.init(ignoreExisting)

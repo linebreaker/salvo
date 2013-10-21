@@ -37,6 +37,8 @@ object Version {
   }
 
   def apply(path: Path): Option[Version] = apply(getBaseName(path.getFileName().toString))
+
+  implicit val ordering = Ordering[(Long, Long)].on[Version](version => (version.major, version.minor))
 }
 
 case class Version(major: Long, minor: Long) {

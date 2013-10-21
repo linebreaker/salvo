@@ -2,10 +2,11 @@ package salvo.tree
 
 import salvo.util._
 import java.nio.file.{ Path, StandardWatchEventKinds, WatchEvent, WatchKey, WatchService }
+import java.util.concurrent.TimeUnit
 import StandardWatchEventKinds._
 import scala.collection.JavaConversions._
 
-class Tail(val dir: Path) {
+class Tail[T](val dir: Path, parse: WatchEvent[_] => Option[T]) {
   def validate() {
     if (!directory(dir)) sys.error("%s doesn't exist or isn't a directory".format(dir))
   }
@@ -32,23 +33,40 @@ class Tail(val dir: Path) {
       result
     })
 
-  private def parse(key: WatchKey): List[Dir] =
+  private def parse(key: WatchKey): List[T] =
     withKey(key) {
-      _.pollEvents().foldRight(List.empty[Dir]) {
+      _.pollEvents().foldRight(List.empty[T]) {
         (evt, acc) => parse(evt).map(_ :: acc).getOrElse(acc)
       }
     }.getOrElse(Nil)
 
-  private def coerce[C](pred: WatchEvent[_] => Boolean)(_evt: WatchEvent[_]): Option[WatchEvent[C]] =
+  def poll(): List[T] = Option(watcher.poll()).toList.flatMap(parse(_))
+  def poll(timeout: Long, unit: TimeUnit): List[T] = Option(watcher.poll(timeout, unit)).toList.flatMap(parse(_))
+  def take() = parse(watcher.take())
+}
+
+object Tail {
+  def coerce[C](pred: WatchEvent[_] => Boolean)(_evt: WatchEvent[_]): Option[WatchEvent[C]] =
     if (pred(_evt)) Some(_evt.asInstanceOf[WatchEvent[C]])
     else None
+}
 
-  private def parse(_evt: WatchEvent[_]): Option[Dir] =
+class DirTail(dir: Path) extends Tail(dir, DirTail.parse(dir))
+
+object DirTail {
+  def parse(dir: Path)(_evt: WatchEvent[_]): Option[Dir] =
     for {
-      new_evt <- coerce[Path](_.kind() == ENTRY_CREATE)(_evt)
+      new_evt <- Tail.coerce[Path](_.kind() == ENTRY_CREATE)(_evt)
       dir <- Dir(dir / new_evt.context())
     } yield dir
+}
 
-  def poll() = Option(watcher.poll()).toList.flatMap(parse(_))
-  def take() = parse(watcher.take())
+class VersionTail(dir: Path) extends Tail(dir, VersionTail.parse(dir))
+
+object VersionTail {
+  def parse(dir: Path)(_evt: WatchEvent[_]): Option[Version] =
+    for {
+      new_evt <- Tail.coerce[Path](_.kind() == ENTRY_CREATE)(_evt)
+      dir <- Version(dir / new_evt.context())
+    } yield dir
 }

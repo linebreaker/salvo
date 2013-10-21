@@ -29,7 +29,7 @@ class TailSpec extends Specification with TestUtils {
 object TailSpec extends TestUtils {
   trait ctx extends UsingTempDir {
     lazy val tail = {
-      val tail = new Tail(tempDir)
+      val tail = new DirTail(tempDir)
       println("spawning Tail in %s".format(tail.dir))
       tail.start()
       tail
