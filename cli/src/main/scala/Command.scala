@@ -45,41 +45,41 @@ object CreateVersion extends Command("create-version") with NilLocalConfig with 
 }
 
 object TransitionVersion extends Command("transition-version") with Util {
-  class LC(var dir: Option[Dir] = None, var state: Option[Dir.State] = None) extends LocalConfig
+  class LC(var version: Option[Version] = None, var state: Option[Dir.State] = None) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) = {
-    (parser.opt[Dir]("dir") required () action localConfig.admit(d => localConfig.dir = Some(d))) ::
+    (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) ::
       (parser.opt[Dir.State]("state") required () action localConfig.admit(s => localConfig.state = Some(s))) :: Nil
   }
   def apply(config: Config) {
     val tree = validate(config)
-    println("dir = "+localConfig.dir+"; state = "+localConfig.state)
+    println("version = "+localConfig.version+"; state = "+localConfig.state)
     for {
-      dir <- localConfig.dir
+      version <- localConfig.version
       state <- localConfig.state
-    } tree.incoming.transition(dir.version, state)
+    } tree.incoming.transition(version, state)
   }
 }
 
 object AppendVersion extends Command("append-version") with Util {
-  class LC(var dir: Option[Dir] = None) extends LocalConfig
+  class LC(var version: Option[Version] = None) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) =
-    (parser.opt[Dir]("dir") required () action localConfig.admit(d => localConfig.dir = Some(d))) :: Nil
+    (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) :: Nil
   def apply(config: Config) {
     val tree = validate(config)
-    for (dir <- localConfig.dir) tree.append(dir.version)
+    for (version <- localConfig.version) tree.append(version)
   }
 }
 
 object ActivateVersion extends Command("activate-version") with Util {
-  class LC(var dir: Option[Dir] = None) extends LocalConfig
+  class LC(var version: Option[Version] = None) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) =
-    (parser.opt[Dir]("dir") required () action localConfig.admit(d => localConfig.dir = Some(d))) :: Nil
+    (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) :: Nil
   def apply(config: Config) {
     val tree = validate(config)
-    for (dir <- localConfig.dir) tree.activate(dir.version)
+    for (version <- localConfig.version) tree.activate(version)
   }
 }
 
