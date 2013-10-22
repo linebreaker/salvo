@@ -173,6 +173,6 @@ object SalvoBuild extends Build {
         perms.add(PosixFilePermission.OTHERS_EXECUTE)
         Files.setPosixFilePermissions(Paths.get(exe.toURI), perms)
         exe
-      })
+      }) ++ com.typesafe.sbt.SbtNativePackager.packagerSettings
   ) dependsOn(dist)
 }
