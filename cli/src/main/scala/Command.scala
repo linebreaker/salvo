@@ -31,7 +31,9 @@ object Init extends Command("init") with Util {
     (parser.opt[Boolean]("ignore-existing") action localConfig.admit(localConfig.exists = _)) :: Nil
 
   def apply(config: Config) {
-    new Tree(config.root).init(ignoreExisting = localConfig.exists)
+    val tree = new Tree(config.root)
+    tree.init(ignoreExisting = localConfig.exists)
+    new Dist(tree).init(ignoreExisting = localConfig.exists)
   }
 }
 
