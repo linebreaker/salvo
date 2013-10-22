@@ -2,7 +2,7 @@ package salvo.util
 
 import java.security._
 import java.nio.file.{ Paths, Files }
-import java.net.{ InetAddress, NetworkInterface }
+import java.net.{ InetAddress, NetworkInterface, URI }
 import scala.collection.JavaConversions._
 
 object `package` {
@@ -15,6 +15,7 @@ object `package` {
 
   implicit def fileToPath(file: File): Path = Paths.get(file.toURI).toAbsolutePath()
   implicit def pathToFile(path: Path): File = path.toAbsolutePath().toFile
+  implicit def pathToURI(path: Path): URI = path.toAbsolutePath().toURI
 
   def exists(path: Path) = path.exists
 

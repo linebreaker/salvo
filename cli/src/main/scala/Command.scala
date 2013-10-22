@@ -1,6 +1,7 @@
 package salvo.cli
 
 import scopt.OptionDef
+import java.net.InetSocketAddress
 import java.nio.file._
 import salvo.util._
 import salvo.tree._
@@ -114,17 +115,18 @@ object SeedVersion extends Command("seed-version") with Util with Logging {
 }
 
 object LeechVersion extends Command("leech-version") with Util with Logging {
-  class LC(var version: Option[Version] = None, var duration: Int = 3600) extends LocalConfig
+  class LC(var version: Option[Version] = None, var server: Option[InetSocketAddress] = None, var duration: Int = 3600) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) =
-    (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) ::
+    (parser.opt[InetSocketAddress]("server") required () action localConfig.admit(s => localConfig.server = Some(s))) ::
+      (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) ::
       (parser.opt[Int]("duration") action localConfig.admit(d => localConfig.duration = d)) ::
       Nil
   def apply(config: Config) {
     val tree = validate(config)
     val dist = new Dist(tree)
-    for (version <- localConfig.version) {
-      val leech = new dist.Leech(version)
+    for (version <- localConfig.version; server <- localConfig.server) {
+      val leech = new dist.Leech(version, server)
       logger.info("created leech: "+leech)
       leech.start()
         def wait(client: com.turn.ttorrent.client.Client) {
