@@ -101,6 +101,7 @@ object Deps {
 
   val UtilDeps = Seq(slf4j_api)
   val TreeDeps = Seq(slf4j_api, commons_io)
+  val CoreDeps = Seq(logback % "test")
   val DistDeps = Seq(ttorrent, commons_codec, jargs, simpleframework, slf4j_simple)
   val CliDeps = Seq(scopt, logback)
 }
@@ -125,7 +126,7 @@ object SalvoBuild extends Build {
 
   lazy val core = Project(
     id = "salvo-core", base = file("core"),
-    settings = buildSettings) dependsOn(tree)
+    settings = buildSettings ++ Seq(libraryDependencies ++= CoreDeps)) dependsOn(tree % "compile->test")
 
   lazy val dist = Project(
     id = "salvo-dist", base = file("dist"),
