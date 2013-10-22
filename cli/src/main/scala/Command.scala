@@ -146,3 +146,29 @@ object LeechVersion extends Command("leech-version") with Util with Logging {
     }
   }
 }
+
+object ServeVersion extends Command("serve-version") with Util with Logging {
+  class LC(var version: Option[Version] = None, var duration: Int = 3600) extends LocalConfig
+  val localConfig = new LC()
+  def init(parser: Parser) = {
+    (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) ::
+      (parser.opt[Int]("duration") action localConfig.admit(d => localConfig.duration = d)) ::
+      Nil
+  }
+  def apply(config: Config) {
+    val tree = validate(config)
+    val dist = new Dist(tree)
+    for (version <- localConfig.version) {
+      val seed = new dist.SecondarySeed(version, localConfig.duration)
+      logger.info("created seed: "+seed)
+      seed.start()
+      while (!dist.finished_?(seed.client)) {
+        logger.info("[ "+seed.trackerURIs.mkString(", ")+" ] seed state: "+seed.client.getState)
+        Thread.sleep(1000L)
+      }
+      seed.client.waitForCompletion()
+      logger.info("stopping seed")
+      seed.stop()
+    }
+  }
+}

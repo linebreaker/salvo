@@ -15,14 +15,8 @@ trait SeedOps {
   sealed abstract class Seed(protected val version: Version, protected val duration: Int = 3600, protected val addr: InetAddress = oneAddr(ipv4_?)) {
     val trackerURIs: List[URI]
 
-    lazy val torrent = dist(version).map {
-      source =>
-        Torrent.create(
-          source,
-          tree.history.contents(version),
-          seqAsJavaList(trackerURIs) :: Nil,
-          "salvo/"+System.getProperty("user.name"))
-    }.getOrElse(sys.error("???"))
+    val file = dir / (version+".torrent")
+    val torrent: Torrent
 
     lazy val shared = new SharedTorrent(torrent, tree.history.dir, true)
     lazy val client = new Client(addr, shared)
@@ -43,7 +37,14 @@ trait SeedOps {
   class PrimarySeed(version: Version, duration: Int = 3600, addr: InetAddress = oneAddr(ipv4_?), port: Int = new ServerSocket(0).getLocalPort()) extends Seed(version, duration, addr) with Logging {
     protected lazy val trackers = addrs().filter(ipv4_?).map(addr => new Tracker(new InetSocketAddress(addr, port)))
     lazy val trackerURIs = trackers.map(_.getAnnounceUrl().toURI)
-    val file = dir / (version+".torrent")
+    lazy val torrent = dist(version).map {
+      source =>
+        Torrent.create(
+          source,
+          tree.history.contents(version),
+          seqAsJavaList(trackerURIs) :: Nil,
+          "salvo/"+System.getProperty("user.name"))
+    }.getOrElse(sys.error("???"))
     protected def preStart() {
       torrent.save(new FileOutputStream(file))
       for (tracker <- trackers) {
@@ -58,7 +59,9 @@ trait SeedOps {
     }
   }
 
-  class SecondarySeed(version: Version, duration: Int = 3600, addr: InetAddress = oneAddr(ipv4_?), val trackerURIs: List[URI]) extends Seed(version, duration, addr) {
+  class SecondarySeed(version: Version, duration: Int = 3600, addr: InetAddress = oneAddr(ipv4_?)) extends Seed(version, duration, addr) {
+    lazy val torrent = Torrent.load(file)
+    lazy val trackerURIs = torrent.getAnnounceList().flatten.toList
     protected def preStart() {}
     protected def postStop() {}
   }

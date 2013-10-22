@@ -23,7 +23,7 @@ trait LeechOps {
       for (entry <- contents) moveToDirectory(entry, dest, false)
       erroneous.delete()
     }
-    def seed(duration: Int = 3600) = new SecondarySeed(version, duration, addr, torrent.getAnnounceList().flatten.toList)
+    def seed(duration: Int = 3600) = new SecondarySeed(version, duration, addr)
     def start() {
       client.download()
     }

@@ -21,4 +21,5 @@ class Parser extends scopt.OptionParser[Config]("salvo") {
   command(ActivateVersion)
   command(SeedVersion)
   command(LeechVersion)
+  command(ServeVersion)
 }
