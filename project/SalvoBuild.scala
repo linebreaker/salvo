@@ -98,11 +98,12 @@ object Deps {
   val slf4j_api = "org.slf4j" % "slf4j-api" % "1.6.4"
   val slf4j_simple = "org.slf4j" % "slf4j-simple" % "1.6.4" % "test"
   val logback = "ch.qos.logback" % "logback-classic" % "1.0.1"
+  def jetty(name: String) = "org.eclipse.jetty" % "jetty-%s".format(name) % "9.0.6.v20130930"
 
   val UtilDeps = Seq(slf4j_api)
   val TreeDeps = Seq(slf4j_api, commons_io)
   val CoreDeps = Seq(logback % "test")
-  val DistDeps = Seq(ttorrent, commons_codec, jargs, simpleframework, slf4j_simple)
+  val DistDeps = Seq(ttorrent, commons_codec, jargs, simpleframework, slf4j_simple, jetty("server"))
   val CliDeps = Seq(scopt, logback)
 }
 
@@ -144,6 +145,13 @@ object SalvoBuild extends Build {
       jarName in assembly <<= (name, version) map { (n, v) => s"${n}-${v}.jar" },
       assemblyCacheUnzip in assembly := false,
       assemblyCacheOutput in assembly := false,
+      mergeStrategy in assembly := {
+        case "META-INF/MANIFEST.MF" | "META-INF/LICENSE" | "META-INF/BCKEY.DSA" => MergeStrategy.discard
+        case PathList("META-INF", x) if x.toLowerCase.endsWith(".sf") => MergeStrategy.discard
+        case PathList("META-INF", x) if x.toLowerCase.endsWith(".dsa") => MergeStrategy.discard
+        case PathList("META-INF", x) if x.toLowerCase.endsWith(".rsa") => MergeStrategy.discard
+        case _ => MergeStrategy.last
+      },
       executableName := "salvo",
       executable := {
         val exe = file(executableName.value)

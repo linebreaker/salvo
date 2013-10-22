@@ -98,11 +98,15 @@ object SeedVersion extends Command("seed-version") with Util with Logging {
       val seed = new dist.PrimarySeed(version, localConfig.duration)
       logger.info("created seed: "+seed)
       seed.start()
+      val server = dist.server()
+      server.start()
       while (!dist.finished_?(seed.client)) {
         logger.info("[ "+seed.trackerURIs.mkString(", ")+" ] seed state: "+seed.client.getState)
         Thread.sleep(1000L)
       }
       seed.client.waitForCompletion()
+      server.stop()
+      server.join()
       logger.info("stopping seed")
       seed.stop()
     }
