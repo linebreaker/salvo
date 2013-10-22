@@ -4,6 +4,8 @@ import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
 import sbtassembly.Plugin._
 import AssemblyKeys._
+import com.typesafe.sbt.SbtNativePackager._
+import com.typesafe.sbt.packager.Keys._
 
 sealed trait ScalaRelease
 case object TwoNine extends ScalaRelease
@@ -137,6 +139,17 @@ object SalvoBuild extends Build {
   lazy val executableName = settingKey[String]("name of executable bundle")
   lazy val executable = taskKey[File]("create executable bundle from assembly JAR")
 
+  lazy val cliPackagerSettings = packagerSettings ++ Seq(
+    maintainer := "Max Afonov <max+salvo@bumnetworks.com>",
+    packageSummary := "Salvo",
+    packageDescription := """http://upload.wikimedia.org/wikipedia/commons/d/d2/USS_New_Jersey_BB-62_salvo_Jan_1953.jpeg""",
+    linuxPackageMappings in Debian <+= (executable) map {
+      exe =>
+      packageMapping(
+        exe -> ("usr/bin/" + exe.getName)) withUser "root" withGroup "root" withPerms "0755"
+    }
+  )
+
   lazy val cli = Project(
     id = "salvo-cli", base = file("cli"),
     settings = buildSettings ++ Seq(libraryDependencies ++= CliDeps) ++ assemblySettings ++ Seq(
@@ -173,6 +186,6 @@ object SalvoBuild extends Build {
         perms.add(PosixFilePermission.OTHERS_EXECUTE)
         Files.setPosixFilePermissions(Paths.get(exe.toURI), perms)
         exe
-      }) ++ com.typesafe.sbt.SbtNativePackager.packagerSettings
+      }) ++ cliPackagerSettings
   ) dependsOn(dist)
 }
