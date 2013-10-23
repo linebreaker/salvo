@@ -1,9 +1,11 @@
 package salvo.util
 
 import java.security._
+import java.io.{ BufferedInputStream, ByteArrayInputStream, BufferedOutputStream, FileOutputStream }
 import java.nio.file.{ Paths, Files }
 import java.net.{ InetAddress, NetworkInterface, URI }
 import scala.collection.JavaConversions._
+import org.apache.commons.io.IOUtils.{ copy => copyStream }
 
 object `package` {
   type File = java.io.File
@@ -64,4 +66,11 @@ object `package` {
     case one :: Nil => one
     case more       => sys.error("wanted only one addr but found "+more)
   }
+
+  def write(bytes: Array[Byte], to: Path, append: Boolean = false): Unit =
+    copyStream(
+      new BufferedInputStream(new ByteArrayInputStream(bytes)),
+      new BufferedOutputStream(new FileOutputStream(to, append)))
+
+  implicit def string2bytes(s: String): Array[Byte] = s.getBytes("UTF-8")
 }

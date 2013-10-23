@@ -92,20 +92,21 @@ object BuildSettings {
 
 object Deps {
   val commons_io = "commons-io" % "commons-io" % "2.4"
+  val commons_lang = "org.apache.commons" % "commons-lang3" % "3.1"
+  val commons_codec = "commons-codec" % "commons-codec" % "1.8"
   val scopt = "com.github.scopt" %% "scopt" % "3.1.0"
   val ttorrent = "com.turn" % "ttorrent" % "1.3-SNAPSHOT" intransitive()
-  val commons_codec = "commons-codec" % "commons-codec" % "1.8"
   val simpleframework = "org.simpleframework" % "simple" % "4.1.21"
   val jargs = "net.sf" % "jargs" % "1.0"
   val slf4j_api = "org.slf4j" % "slf4j-api" % "1.6.4"
-  val slf4j_simple = "org.slf4j" % "slf4j-simple" % "1.6.4" % "test"
+  val slf4j_simple = "org.slf4j" % "slf4j-simple" % "1.6.4"
   val logback = "ch.qos.logback" % "logback-classic" % "1.0.1"
   def jetty(name: String) = "org.eclipse.jetty" % "jetty-%s".format(name) % "9.0.6.v20130930"
 
-  val UtilDeps = Seq(slf4j_api)
-  val TreeDeps = Seq(slf4j_api, commons_io)
+  val UtilDeps = Seq(slf4j_api, commons_io)
+  val TreeDeps = Seq(commons_lang % "test", commons_codec % "test")
   val CoreDeps = Seq(logback % "test")
-  val DistDeps = Seq(ttorrent, commons_codec, jargs, simpleframework, slf4j_simple, jetty("server"))
+  val DistDeps = Seq(ttorrent, jargs, simpleframework, slf4j_simple % "test", jetty("server"))
   val CliDeps = Seq(scopt, logback)
 }
 

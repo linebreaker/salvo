@@ -13,5 +13,6 @@ abstract class Area(dir: Path) {
   def list(version: Option[Version] = None): List[Dir] = Dir.list(dir)(version)
   def contents(version: Version): List[File] = apply(version).map(this / _.path).map(_.listFiles.toList).getOrElse(Nil)
   def apply(version: Version): Option[Dir] = Dir.load(dir)(version)
-  def /(path: Path) = dir / path
+  def /(path: Path): Path = dir / path
+  def /(next: Dir): Path = dir / next.path
 }

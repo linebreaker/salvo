@@ -15,7 +15,7 @@ class TailSpec extends Specification with TestUtils {
     }
     "generate a specific number of events" in {
         def nEvents(n: Int) =
-          "generate %d events".format(n) in new NnewDirs(n) with ctx {
+          "generate %d events".format(n) in new NnewDirs(n) {
             polled must beSome.which(_.size == n)
           }
       nEvents(1)
@@ -27,7 +27,7 @@ class TailSpec extends Specification with TestUtils {
 }
 
 object TailSpec extends TestUtils {
-  trait ctx extends UsingTempDir {
+  abstract class ctx extends UsingTempDir(keep = false) {
     lazy val tail = {
       val tail = new DirTail(tempDir)
       println("spawning Tail in %s".format(tail.dir))
@@ -52,9 +52,7 @@ object TailSpec extends TestUtils {
       tail.stop()
     }
   }
-  class NnewDirs(n: Int) {
-    self: ctx =>
-
+  class NnewDirs(n: Int) extends ctx {
     def create() {
       val path = tail.dir / Dir.init().path
       val created = path.mkdirs()
