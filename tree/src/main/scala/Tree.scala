@@ -38,7 +38,7 @@ class Tree(val root: Path) {
       case _ =>
         history(version).flatMap {
           case dir @ Dir(_, Dir.Ready) =>
-            current.delete()
+            current.unlink()
             current.create(history / dir.path)
             Some(version)
         } orElse (sys.error("unable to activate non-existent version "+version))
@@ -50,7 +50,7 @@ class Tree(val root: Path) {
     def create(path: Path) {
       Files.createSymbolicLink(link, path.toAbsolutePath())
     }
-    def delete() {
+    def unlink() {
       if (validate()) Files.delete(link)
     }
     def apply(): Option[Dir] =
