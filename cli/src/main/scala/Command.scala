@@ -1,7 +1,7 @@
 package salvo.cli
 
 import scopt.OptionDef
-import java.net.InetSocketAddress
+import java.net.{ InetAddress, InetSocketAddress }
 import java.nio.file._
 import salvo.util._
 import salvo.tree._
@@ -86,17 +86,18 @@ object ActivateVersion extends Command("activate-version") with Util {
 }
 
 object SeedVersion extends Command("seed-version") with Util with Logging {
-  class LC(var version: Option[Version] = None, var duration: Int = 3600) extends LocalConfig
+  class LC(var version: Option[Version] = None, var duration: Int = 3600, var addr: InetAddress = oneAddr(ipv4_?)) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) = {
     (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) ::
       (parser.opt[Int]("duration") action localConfig.admit(d => localConfig.duration = d)) ::
+      (parser.opt[InetAddress]("addr") action localConfig.admit(a => localConfig.addr = a)) ::
       Nil
   }
   def apply(config: Config) {
     val tree = validate(config)
     for (version <- localConfig.version) {
-      val action = new SeedAction(tree, version, localConfig.duration)
+      val action = new SeedAction(tree, version, localConfig.duration, localConfig.addr)
       val run = action()
       run.start()
       run.await()
@@ -106,19 +107,20 @@ object SeedVersion extends Command("seed-version") with Util with Logging {
 }
 
 object LeechVersion extends Command("leech-version") with Util with Logging {
-  class LC(var version: Option[Version] = None, var server: Option[InetSocketAddress] = None, var duration: Int = 3600) extends LocalConfig
+  class LC(var version: Option[Version] = None, var server: Option[InetSocketAddress] = None, var duration: Int = 3600, var addr: InetAddress = oneAddr(ipv4_?)) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) =
     (parser.opt[InetSocketAddress]("server") required () action localConfig.admit(s => localConfig.server = Some(s))) ::
       (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) ::
       (parser.opt[Int]("duration") action localConfig.admit(d => localConfig.duration = d)) ::
+      (parser.opt[InetAddress]("addr") action localConfig.admit(a => localConfig.addr = a)) ::
       Nil
   def apply(config: Config) {
     val tree = validate(config)
     val dist = new Dist(tree)
     for (version <- localConfig.version; server <- localConfig.server) {
       // first leech
-      val leech = (new LeechAction(tree, version, server, localConfig.duration))()
+      val leech = (new LeechAction(tree, version, server, localConfig.duration, localConfig.addr))()
       leech.start()
       leech.await()
       leech.stop()
@@ -132,18 +134,19 @@ object LeechVersion extends Command("leech-version") with Util with Logging {
 }
 
 object ServeVersion extends Command("serve-version") with Util with Logging {
-  class LC(var version: Option[Version] = None, var duration: Int = 3600) extends LocalConfig
+  class LC(var version: Option[Version] = None, var duration: Int = 3600, var addr: InetAddress = oneAddr(ipv4_?)) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) = {
     (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) ::
       (parser.opt[Int]("duration") action localConfig.admit(d => localConfig.duration = d)) ::
+      (parser.opt[InetAddress]("addr") action localConfig.admit(a => localConfig.addr = a)) ::
       Nil
   }
   def apply(config: Config) {
     val tree = validate(config)
     val dist = new Dist(tree)
     for (version <- localConfig.version) {
-      val action = new ServeAction(tree, version, localConfig.duration)
+      val action = new ServeAction(tree, version, localConfig.duration, localConfig.addr)
       val run = action()
       run.start()
       run.await()

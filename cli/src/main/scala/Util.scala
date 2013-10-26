@@ -3,7 +3,7 @@ package salvo.cli
 import salvo.util._
 import salvo.tree._
 import java.nio.file._
-import java.net.InetSocketAddress
+import java.net.{ InetAddress, InetSocketAddress }
 import scopt.Read.reads
 
 trait Util {
@@ -21,4 +21,5 @@ trait Util {
       case Array(host, port) => new InetSocketAddress(host, port.toInt)
       case _                 => sys.error("unable to read "+a+" as a InetSocketAddress")
     })
+  implicit val readsInetAddress = reads[InetAddress](InetAddress.getByName(_))
 }

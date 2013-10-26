@@ -3,13 +3,13 @@ package salvo.actions
 import salvo.util._
 import salvo.tree._
 import salvo.dist._
-import java.net.InetSocketAddress
+import java.net.{ InetAddress, InetSocketAddress }
 
-class LeechAction(tree: Tree, version: Version, server: InetSocketAddress, duration: Int) extends Logging {
+class LeechAction(tree: Tree, version: Version, server: InetSocketAddress, duration: Int, addr: InetAddress = oneAddr(ipv4_?)) extends Logging {
   val dist = new Dist(tree)
 
   class run {
-    val leech = new dist.Leech(version, server)
+    val leech = new dist.Leech(version, server, addr)
     logger.info("created leech: "+leech)
 
     def start() {
