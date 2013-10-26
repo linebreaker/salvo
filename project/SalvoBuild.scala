@@ -45,7 +45,7 @@ object BuildSettings {
           case TwoTen => "2.2"
           case TwoNine => "1.12.4.1"
         }
-      } % "test,provided"
+      } % "test"
     },
     testFrameworks += TestFrameworks.Specs,
     offline := false,
@@ -103,10 +103,10 @@ object Deps {
   val logback = "ch.qos.logback" % "logback-classic" % "1.0.1"
   def jetty(name: String) = "org.eclipse.jetty" % "jetty-%s".format(name) % "9.0.6.v20130930"
 
-  val UtilDeps = Seq(slf4j_api, slf4j_simple % "test,provided", commons_io)
-  val TreeDeps = Seq(commons_lang % "test,provided", commons_codec % "test,provided")
+  val UtilDeps = Seq(slf4j_api, slf4j_simple % "test", commons_io)
+  val TreeDeps = Seq(commons_lang % "test", commons_codec % "test")
   val CoreDeps = Seq()
-  val DistDeps = Seq(ttorrent, jargs, simpleframework, jetty("server"))
+  val DistDeps = Seq(ttorrent, jargs, simpleframework, jetty("server"), commons_codec)
   val CliDeps = Seq(scopt, logback)
 }
 
