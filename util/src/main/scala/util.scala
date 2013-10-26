@@ -67,7 +67,7 @@ object `package` extends Logging {
   def ipv4_?(addr: InetAddress) = addr.getAddress().size == 4
   def oneAddr(f: InetAddress => Boolean) = addrs.filter(f) match {
     case one :: Nil => one
-    case more       => sys.error("wanted only one addr but found "+more)
+    case _          => InetAddress.getByName("0.0.0.0")
   }
 
   def write(bytes: Array[Byte], to: Path, append: Boolean = false): Unit =
