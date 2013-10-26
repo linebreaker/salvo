@@ -10,15 +10,14 @@ import org.apache.commons.codec.digest.DigestUtils.sha1Hex
 trait TestUtils {
   spec =>
 
-  implicit def string2path(path: String) = java.nio.file.Paths.get(path)
   val validVersionString = "20080328044530-12345"
   val validVersion = Version(major = 20080328044530L, minor = 12345L)
-  abstract class UsingTempDir(keep: Boolean = false) extends After {
-    protected lazy val tempDir = {
-      val x = Files.createTempDirectory(Paths.get("/tmp"), spec.getClass.getSimpleName+".")
-      println("[%s]: created temp dir: %s".format(spec.getClass.getSimpleName, x))
-      x
-    }
+  trait UsingTempDir extends After {
+    def keep = false
+    val tempDir =
+      useAndReturn(Files.createTempDirectory(Paths.get("/tmp"), spec.getClass.getSimpleName+"."))(
+        dir =>
+          println("[%s]: created temp dir: %s".format(spec.getClass.getSimpleName, dir)))
     def cleanup() {}
     def after =
       if (keep) {

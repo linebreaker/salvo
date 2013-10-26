@@ -18,7 +18,8 @@ trait SeedOps {
     val file = dir / (version+".torrent")
     val torrent: Torrent
 
-    lazy val shared = new SharedTorrent(torrent, tree.history.dir, true)
+    lazy val original = tree.history(version).map(tree.history.dir / _.version.toString).getOrElse(???)
+    lazy val shared = new SharedTorrent(torrent, original, true)
     lazy val client = new Client(addr, shared)
 
     protected def preStart(): Unit
@@ -37,11 +38,11 @@ trait SeedOps {
   class PrimarySeed(version: Version, duration: Int = 3600, addr: InetAddress = oneAddr(ipv4_?), port: Int = new ServerSocket(0).getLocalPort()) extends Seed(version, duration, addr) with Logging {
     protected lazy val trackers = addrs().filter(ipv4_?).map(addr => new Tracker(new InetSocketAddress(addr, port)))
     lazy val trackerURIs = trackers.map(_.getAnnounceUrl().toURI)
-    lazy val torrent = dist(version).map {
+    lazy val torrent = tree.history(version).map(tree.history / (_, Packed)).map {
       source =>
         Torrent.create(
           source,
-          tree.history.contents(version),
+          tree.history.contents(version, Packed).filterNot(directory).map(_.toFile).toList,
           seqAsJavaList(trackerURIs) :: Nil,
           "salvo/"+System.getProperty("user.name"))
     }.getOrElse(sys.error("???"))

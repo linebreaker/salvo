@@ -10,13 +10,15 @@ import org.apache.commons.io.FileUtils.deleteDirectory
 
 class TailSpec extends Specification with TestUtils {
   "Tail" should {
-    "return no events" in new ctx {
+    "return no events" in new NnewDirs {
+      def n = 0
       attempt("no events")(expected = 0)(identity) must beSome.which(_.isEmpty)
     }
     "generate a specific number of events" in {
-        def nEvents(n: Int) =
-          "generate %d events".format(n) in new NnewDirs(n) {
-            polled must beSome.which(_.size == n)
+        def nEvents(size: Int) =
+          "generate %d events".format(size) in new NnewDirs {
+            def n = size
+            polled must beSome.which(_.size == size)
           }
       nEvents(1)
       nEvents(2)
@@ -27,8 +29,9 @@ class TailSpec extends Specification with TestUtils {
 }
 
 object TailSpec extends TestUtils {
-  abstract class ctx extends UsingTempDir(keep = false) {
-    lazy val tail = {
+  trait NnewDirs extends UsingTempDir {
+    def n: Int
+    val tail = {
       val tail = new DirTail(tempDir)
       println("spawning Tail in %s".format(tail.dir))
       tail.start()
@@ -51,8 +54,6 @@ object TailSpec extends TestUtils {
     override def cleanup() {
       tail.stop()
     }
-  }
-  class NnewDirs(n: Int) extends ctx {
     def create() {
       val path = tail.dir / Dir.init().path
       val created = path.mkdirs()

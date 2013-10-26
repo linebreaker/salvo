@@ -6,8 +6,10 @@ import java.nio.file.{ Paths, Files }
 import java.net.{ InetAddress, NetworkInterface, URI }
 import scala.collection.JavaConversions._
 import org.apache.commons.io.IOUtils.{ copy => copyStream }
+import org.apache.commons.io.FileUtils.iterateFilesAndDirs
+import org.apache.commons.io.filefilter.TrueFileFilter
 
-object `package` {
+object `package` extends Logging {
   type File = java.io.File
   type Path = java.nio.file.Path
 
@@ -16,6 +18,7 @@ object `package` {
   val PWD = Paths.get("").toAbsolutePath()
 
   implicit def fileToPath(file: File): Path = Paths.get(file.toURI).toAbsolutePath()
+  implicit def stringToPath(path: String): Path = Paths.get(path).toAbsolutePath()
   implicit def pathToFile(path: Path): File = path.toAbsolutePath().toFile
   implicit def pathToURI(path: Path): URI = path.toAbsolutePath().toURI
 
@@ -73,4 +76,7 @@ object `package` {
       new BufferedOutputStream(new FileOutputStream(to, append)))
 
   implicit def string2bytes(s: String): Array[Byte] = s.getBytes("UTF-8")
+
+  def traverse(path: Path): Iterator[Path] =
+    iterateFilesAndDirs(path, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE).map(fileToPath)
 }

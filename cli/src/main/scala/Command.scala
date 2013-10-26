@@ -6,6 +6,7 @@ import java.nio.file._
 import salvo.util._
 import salvo.tree._
 import salvo.dist._
+import salvo.actions._
 
 abstract class Command(val name: String) extends (Config => Unit) {
   abstract class LocalConfig {
@@ -41,7 +42,7 @@ object Init extends Command("init") with Util {
 object CreateVersion extends Command("create-version") with NilLocalConfig with Util {
   def apply(config: Config) {
     val tree = validate(config)
-    for (created <- tree.incoming.create()) println(tree.incoming.dir / created.path)
+    for (created <- tree.incoming.create(repr = Unpacked)) println(created.version)
   }
 }
 
@@ -94,22 +95,12 @@ object SeedVersion extends Command("seed-version") with Util with Logging {
   }
   def apply(config: Config) {
     val tree = validate(config)
-    val dist = new Dist(tree)
     for (version <- localConfig.version) {
-      val seed = new dist.PrimarySeed(version, localConfig.duration)
-      logger.info("created seed: "+seed)
-      seed.start()
-      val server = dist.server()
-      server.start()
-      while (!dist.finished_?(seed.client)) {
-        logger.info("[ "+seed.trackerURIs.mkString(", ")+" ] seed state: "+seed.client.getState)
-        Thread.sleep(1000L)
-      }
-      seed.client.waitForCompletion()
-      server.stop()
-      server.join()
-      logger.info("stopping seed")
-      seed.stop()
+      val action = new SeedAction(tree, version, localConfig.duration)
+      val run = action()
+      run.start()
+      run.await()
+      run.stop()
     }
   }
 }
@@ -126,28 +117,15 @@ object LeechVersion extends Command("leech-version") with Util with Logging {
     val tree = validate(config)
     val dist = new Dist(tree)
     for (version <- localConfig.version; server <- localConfig.server) {
-      val leech = new dist.Leech(version, server)
-      logger.info("created leech: "+leech)
+      // first leech
+      val leech = (new LeechAction(tree, version, server, localConfig.duration))()
       leech.start()
-        def wait(client: com.turn.ttorrent.client.Client) {
-          while (!dist.finished_?(client)) {
-            logger.info("client state: "+client.getState+" ("+"%.2f".format(client.getTorrent.getCompletion())+"% complete)")
-            Thread.sleep(1000L)
-          }
-        }
-      wait(leech.client)
-      leech.client.waitForCompletion()
-      logger.info("stopping leech")
+      leech.await()
       leech.stop()
-      leech.move()
-      tree.incoming.transition(version, Dir.Ready)
-      tree.append(version)
-      logger.info("starting secondary seed")
-      val seed = leech.seed(localConfig.duration)
-      logger.info("created secondary seed: "+seed)
+      // then serve
+      val seed = (new ServeAction(tree, version, localConfig.duration))()
       seed.start()
-      wait(seed.client)
-      seed.client.waitForCompletion()
+      seed.await()
       seed.stop()
     }
   }
@@ -165,16 +143,11 @@ object ServeVersion extends Command("serve-version") with Util with Logging {
     val tree = validate(config)
     val dist = new Dist(tree)
     for (version <- localConfig.version) {
-      val seed = new dist.SecondarySeed(version, localConfig.duration)
-      logger.info("created seed: "+seed)
-      seed.start()
-      while (!dist.finished_?(seed.client)) {
-        logger.info("[ "+seed.trackerURIs.mkString(", ")+" ] seed state: "+seed.client.getState)
-        Thread.sleep(1000L)
-      }
-      seed.client.waitForCompletion()
-      logger.info("stopping seed")
-      seed.stop()
+      val action = new ServeAction(tree, version, localConfig.duration)
+      val run = action()
+      run.start()
+      run.await()
+      run.stop()
     }
   }
 }

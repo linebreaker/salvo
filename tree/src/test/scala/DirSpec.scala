@@ -44,7 +44,7 @@ class DirSpec extends Specification with TestUtils {
     "transition directories" in new UsingTempDir {
       val version = Version.now()
       object incoming extends Incoming(tempDir)
-      incoming.create(version, state = Dir.Incomplete)
+      incoming.create(version, state = Dir.Incomplete, repr = Unpacked)
       incoming(version) must beSome[Dir].which(_ == Dir(version, state = Dir.Incomplete))
       incoming.transition(version, state = Dir.Ready)
       incoming(version) must beSome[Dir].which(_ == Dir(version, state = Dir.Ready))

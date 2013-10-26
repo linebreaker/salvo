@@ -45,7 +45,7 @@ object BuildSettings {
           case TwoTen => "2.2"
           case TwoNine => "1.12.4.1"
         }
-      } % "test"
+      } % "test,provided"
     },
     testFrameworks += TestFrameworks.Specs,
     offline := false,
@@ -103,10 +103,10 @@ object Deps {
   val logback = "ch.qos.logback" % "logback-classic" % "1.0.1"
   def jetty(name: String) = "org.eclipse.jetty" % "jetty-%s".format(name) % "9.0.6.v20130930"
 
-  val UtilDeps = Seq(slf4j_api, commons_io)
-  val TreeDeps = Seq(commons_lang % "test", commons_codec % "test")
-  val CoreDeps = Seq(logback % "test")
-  val DistDeps = Seq(ttorrent, jargs, simpleframework, slf4j_simple % "test", jetty("server"))
+  val UtilDeps = Seq(slf4j_api, slf4j_simple % "test,provided", commons_io)
+  val TreeDeps = Seq(commons_lang % "test,provided", commons_codec % "test,provided")
+  val CoreDeps = Seq()
+  val DistDeps = Seq(ttorrent, jargs, simpleframework, jetty("server"))
   val CliDeps = Seq(scopt, logback)
 }
 
@@ -117,7 +117,7 @@ object SalvoBuild extends Build {
   lazy val root = Project(
     id = "salvo", base = file("."),
     settings = buildSettings ++ Seq(publish := {})
-  ) aggregate(util, tree, core, dist, cli)
+  ) aggregate(util, tree, core, dist, actions, cli)
 
   lazy val util = Project(
     id = "salvo-util", base = file("util"),
@@ -126,16 +126,21 @@ object SalvoBuild extends Build {
   lazy val tree = Project(
     id = "salvo-tree", base = file("tree"),
     settings = buildSettings ++ Seq(libraryDependencies ++= TreeDeps)
-  ) dependsOn(util)
+  ) dependsOn(util % "test->test;compile->compile")
 
   lazy val core = Project(
     id = "salvo-core", base = file("core"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= CoreDeps)) dependsOn(tree % "compile->test")
+    settings = buildSettings ++ Seq(libraryDependencies ++= CoreDeps)) dependsOn(tree % "test->test;compile->compile")
 
   lazy val dist = Project(
     id = "salvo-dist", base = file("dist"),
     settings = buildSettings ++ Seq(libraryDependencies ++= DistDeps)
-  ) dependsOn(core)
+  ) dependsOn(core % "test->test;compile->compile")
+
+  lazy val actions = Project(
+    id = "salvo-actions", base = file("actions"),
+    settings = buildSettings
+  ) dependsOn(dist % "test->test;compile->compile")
 
   lazy val executableName = settingKey[String]("name of executable bundle")
   lazy val executable = taskKey[File]("create executable bundle from assembly JAR")
@@ -188,5 +193,5 @@ object SalvoBuild extends Build {
         Files.setPosixFilePermissions(Paths.get(exe.toURI), perms)
         exe
       }) ++ cliPackagerSettings
-  ) dependsOn(dist)
+  ) dependsOn(actions % "test->test;compile->compile")
 }

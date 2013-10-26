@@ -4,7 +4,7 @@ import salvo.util._
 import salvo.tree._
 import com.turn.ttorrent.client.Client
 
-class Dist(val tree: Tree) extends SeedOps with LeechOps with TorrentsOps {
+class Dist(val tree: Tree) extends SeedOps with LeechOps with TorrentsOps with Logging {
   dist =>
 
   lazy val dir = tree.root / "torrents"
@@ -27,8 +27,6 @@ class Dist(val tree: Tree) extends SeedOps with LeechOps with TorrentsOps {
       case _                                        => true
     }
   }
-
-  def apply(version: Version) = tree.history(version).map(tree.history / _.path)
 
   def seed_?(version: Version) = tree.history(version).nonEmpty
 }

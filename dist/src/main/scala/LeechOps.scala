@@ -21,15 +21,12 @@ trait LeechOps {
       copyStream(url.openConnection().getInputStream(), new FileOutputStream(new File(file)))
       Torrent.load(file)
     }
-    lazy val dest = tree.incoming / tree.incoming.create(version).map(_.path).getOrElse(sys.error("???"))
-    lazy val shared = new SharedTorrent(torrent, dest, false)
-    lazy val client = new Client(addr, shared)
-    def move() {
-      val erroneous = dest / version.toString
-      val contents: List[File] = erroneous.listFiles.toList
-      for (entry <- contents) moveToDirectory(entry, dest, false)
-      erroneous.delete()
+    lazy val dest = tree.incoming.create(version, repr = Packed).map(tree.incoming.dir / _.path).getOrElse(???)
+    lazy val shared = {
+      logger.info("DEST: "+dest)
+      new SharedTorrent(torrent, dest, false)
     }
+    lazy val client = new Client(addr, shared)
     def seed(duration: Int = 3600) = new SecondarySeed(version, duration, addr)
     def start() {
       client.download()
