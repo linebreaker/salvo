@@ -95,7 +95,7 @@ object Deps {
   val commons_lang = "org.apache.commons" % "commons-lang3" % "3.1"
   val commons_codec = "commons-codec" % "commons-codec" % "1.8"
   val scopt = "com.github.scopt" %% "scopt" % "3.1.0"
-  val ttorrent = "com.turn" % "ttorrent" % "1.3-SNAPSHOT" intransitive()
+  lazy val ttorrent = ProjectRef(file("../ttorrent"), "ttorrent")
   val simpleframework = "org.simpleframework" % "simple" % "4.1.21"
   val jargs = "net.sf" % "jargs" % "1.0"
   val slf4j_api = "org.slf4j" % "slf4j-api" % "1.6.4"
@@ -106,7 +106,7 @@ object Deps {
   val UtilDeps = Seq(slf4j_api, slf4j_simple % "test", commons_io)
   val TreeDeps = Seq(commons_lang % "test", commons_codec % "test")
   val CoreDeps = Seq()
-  val DistDeps = Seq(ttorrent, jargs, simpleframework, jetty("server"), commons_codec)
+  val DistDeps = Seq(jargs, simpleframework, jetty("server"), commons_codec)
   val CliDeps = Seq(scopt, logback)
 }
 
@@ -135,7 +135,7 @@ object SalvoBuild extends Build {
   lazy val dist = Project(
     id = "salvo-dist", base = file("dist"),
     settings = buildSettings ++ Seq(libraryDependencies ++= DistDeps)
-  ) dependsOn(core % "test->test;compile->compile")
+  ) dependsOn(core % "test->test;compile->compile", ttorrent)
 
   lazy val actions = Project(
     id = "salvo-actions", base = file("actions"),
