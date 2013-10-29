@@ -26,7 +26,7 @@ object BuildSettings {
     organization := "com.bumnetworks",
     version := "0.0.2-SNAPSHOT",
     scalaVersion := "2.10.3",
-    crossScalaVersions := Seq("2.9.2", "2.9.3", "2.10.3"),
+    crossScalaVersions := Seq("2.9.2", "2.10.3"),
     scalacOptions <++= scalaVersion map {
       sv =>
       ScalaRelease(sv) match {

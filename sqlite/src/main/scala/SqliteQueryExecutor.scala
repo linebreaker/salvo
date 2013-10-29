@@ -1,18 +1,20 @@
 package salvo.sqlite
 
+import scala.util.control.Exception.allCatch
 import salvo.util._
 import salvo.tree._
 import salvo.core._
 import org.sqlite.{ SQLiteOpenMode, SQLiteConfig, JDBC }
 import com.jolbox.bonecp.BoneCPConfig
-import java.sql.DriverManager
+import java.sql.{ DriverManager, Connection }
 import com.novus.jdbc.bonecp.DebonedQueryExecutor
 import com.novus.jdbc.sqlite.Sqlite
 
 class SqliteQueryExecutor(db: String, readOnly: Boolean)(implicit dir: SqliteDir) {
-  val path = dir / "%s.sqlite3".format(db)
-  val jdbcUrl = "jdbc:sqlite:%s".format(path.toAbsolutePath)
-  val sqliteConfig = {
+  private val path = dir / "%s.sqlite3".format(db)
+  private val jdbcUrl = "jdbc:sqlite:%s".format(path.toAbsolutePath)
+
+  private val sqliteConfig = {
     val config = new SQLiteConfig()
     config.setReadOnly(readOnly)
     if (readOnly)
@@ -26,7 +28,7 @@ class SqliteQueryExecutor(db: String, readOnly: Boolean)(implicit dir: SqliteDir
     config
   }
 
-  val bonecpConfig = {
+  private val bonecpConfig = {
     val c = new BoneCPConfig(sqliteConfig.toProperties)
     c.setJdbcUrl(jdbcUrl)
     c
@@ -34,4 +36,16 @@ class SqliteQueryExecutor(db: String, readOnly: Boolean)(implicit dir: SqliteDir
 
   val executor =
     DebonedQueryExecutor[Sqlite](config = bonecpConfig, driver = classOf[JDBC].getName)
+
+  def connection[T](f: Connection => T): Either[Throwable, T] =
+    allCatch.either {
+      var conn = Option.empty[Connection]
+      try {
+        conn = Some(DriverManager.getConnection(jdbcUrl, sqliteConfig.toProperties))
+      }
+      finally {
+        conn.foreach(_.close())
+      }
+      conn.map(f).getOrElse(sys.error("???"))
+    }
 }
