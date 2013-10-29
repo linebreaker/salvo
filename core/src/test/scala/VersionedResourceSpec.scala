@@ -36,7 +36,6 @@ class VersionedResourceSpec extends Specification with TestUtils {
       swap()
 
       HelloResource.stop()
-      success
     }
   }
 }

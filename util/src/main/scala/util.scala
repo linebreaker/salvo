@@ -42,12 +42,7 @@ object `package` extends Logging {
 
   def mv(src: Path, dst: Path) = src.renameTo(dst)
 
-  implicit def pimpPath(path: Path) = new {
-    pimped =>
-    def /(other: Path): Path = path.resolve(other).toAbsolutePath()
-    def /(other: File): Path = pimped / (other: Path)
-    def /(other: String): Path = path.resolve(other).toAbsolutePath()
-  }
+  implicit def pimpPath(path: Path) = new PimpedPath(path)
 
   def priv[T](op: => T): Either[Throwable, T] =
     allCatch.either(
@@ -90,4 +85,11 @@ object `package` extends Logging {
 
   def traverse(path: Path): Iterator[Path] =
     iterateFilesAndDirs(path, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE).map(fileToPath)
+}
+
+class PimpedPath(path: Path) {
+  pimped =>
+  def /(other: Path): Path = path.resolve(other).toAbsolutePath()
+  def /(other: File): Path = pimped / (other: Path)
+  def /(other: String): Path = path.resolve(other).toAbsolutePath()
 }

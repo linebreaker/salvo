@@ -24,7 +24,7 @@ object BuildSettings {
 
   lazy val buildSettings = Defaults.defaultSettings ++ Seq(
     organization := "com.bumnetworks",
-    version := "0.0.1",
+    version := "0.0.2-SNAPSHOT",
     scalaVersion := "2.10.3",
     crossScalaVersions := Seq("2.9.2", "2.9.3", "2.10.3"),
     scalacOptions <++= scalaVersion map {
@@ -105,11 +105,15 @@ object Deps {
   val slf4j_simple = "org.slf4j" % "slf4j-simple" % "1.6.4"
   val logback = "ch.qos.logback" % "logback-classic" % "1.0.1"
   def jetty(name: String) = "org.eclipse.jetty" % "jetty-%s".format(name) % "9.0.6.v20130930"
+  val sqlite_jdbc = "org.xerial" % "sqlite-jdbc" % "3.7.15-M1"
+  val novus_jdbc = "com.novus" %% "novus-jdbc-core" % "0.9.5-FINAL"
+  val novus_jdbc_bonecp = "com.novus" %% "novus-jdbc-bonecp" % "0.9.5-FINAL"
 
   val UtilDeps = Seq(slf4j_api, slf4j_simple % "test", commons_io)
   val TreeDeps = Seq(commons_lang % "test", commons_codec % "test")
   val CoreDeps = Seq()
   val DistDeps = Seq(jargs, simpleframework, jetty("server"), commons_codec)
+  val SqliteDeps = Seq(sqlite_jdbc, novus_jdbc, novus_jdbc_bonecp)
   val CliDeps = Seq(scopt, logback)
 }
 
@@ -120,7 +124,7 @@ object SalvoBuild extends Build {
   lazy val root = Project(
     id = "salvo", base = file("."),
     settings = buildSettings ++ Seq(publish := {})
-  ) aggregate(util, tree, core, dist, actions, cli)
+  ) aggregate(util, tree, core, dist, actions, cli, sqlite)
 
   lazy val util = Project(
     id = "salvo-util", base = file("util"),
@@ -143,6 +147,11 @@ object SalvoBuild extends Build {
   lazy val actions = Project(
     id = "salvo-actions", base = file("actions"),
     settings = buildSettings ++ publishSettings
+  ) dependsOn(dist % "test->test;compile->compile")
+
+  lazy val sqlite = Project(
+    id = "salvo-sqlite", base = file("sqlite"),
+    settings = buildSettings ++ publishSettings ++ Seq(libraryDependencies ++= SqliteDeps)
   ) dependsOn(dist % "test->test;compile->compile")
 
   lazy val executableName = settingKey[String]("name of executable bundle")
