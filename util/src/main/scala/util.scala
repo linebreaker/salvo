@@ -1,11 +1,11 @@
 package salvo.util
 
 import java.security._
-import java.io.{ BufferedInputStream, ByteArrayInputStream, BufferedOutputStream, FileOutputStream }
+import java.io.{ BufferedInputStream, ByteArrayInputStream, BufferedOutputStream, FileOutputStream, FileInputStream }
 import java.nio.file.{ Paths, Files }
 import java.net.{ InetAddress, NetworkInterface, URI }
 import scala.collection.JavaConversions._
-import org.apache.commons.io.IOUtils.{ copy => copyStream }
+import org.apache.commons.io.IOUtils.{ copy => copyStream, toByteArray => readStream }
 import org.apache.commons.io.FileUtils.iterateFilesAndDirs
 import org.apache.commons.io.filefilter.TrueFileFilter
 
@@ -70,10 +70,19 @@ object `package` extends Logging {
     case _          => InetAddress.getByName("0.0.0.0")
   }
 
-  def write(bytes: Array[Byte], to: Path, append: Boolean = false): Unit =
+  def read(from: Path): Array[Byte] =
+    readStream(new FileInputStream(from))
+
+  implicit def bytes2string(a: Array[Byte]): String = new String(a, "UTF-8")
+
+  def write(bytes: Array[Byte], to: Path, append: Boolean = false): Unit = {
+    val out = new BufferedOutputStream(new FileOutputStream(to, append))
     copyStream(
       new BufferedInputStream(new ByteArrayInputStream(bytes)),
-      new BufferedOutputStream(new FileOutputStream(to, append)))
+      out)
+    out.flush()
+    out.close()
+  }
 
   implicit def string2bytes(s: String): Array[Byte] = s.getBytes("UTF-8")
 
