@@ -11,8 +11,6 @@ class VersionedQueryExecutorSpec extends Specification with TestUtils {
   import Person._
   "a VersionedQueryExecutor" should {
     "maintain a versioned set of SQLite query executors" in new UsingTempDir {
-      override def keep = true
-
       val tree = new Tree(tempDir)
       tree.init(ignoreExisting = true)
 

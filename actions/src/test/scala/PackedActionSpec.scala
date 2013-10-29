@@ -12,7 +12,6 @@ import org.apache.commons.lang3.RandomStringUtils.random
 class PackedActionsSpec extends Specification with TestUtils with Logging {
   "Actions" should {
     "distribute packed version" in new UsingTempDir {
-      override def keep = true
       val version = Version.now()
 
       object first extends Tree(tempDir / "first")
