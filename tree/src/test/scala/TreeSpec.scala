@@ -62,7 +62,7 @@ class TreeSpec extends Specification with TestUtils {
       val pathO = tree.incoming(version).map(tree.incoming / (_, Unpacked) / "garbage")
       pathO must beSome[Path].which {
         path =>
-          write(random(1024 * 1024 * 100), path)
+          writeTo(random(1024 * 1024 * 100), path)
           val digestBefore = digest(path)
           tree.incoming.transition(version, state = Dir.Ready)
           tree.append(version) must beSome[Version]
@@ -82,7 +82,7 @@ class TreeSpec extends Specification with TestUtils {
       val pathO = tree.incoming(version).map(tree.incoming / (_, Unpacked) / "garbage")
       pathO must beSome[Path].which {
         path =>
-          write(random(1024 * 1024 * 100), path)
+          writeTo(random(1024 * 1024 * 100), path)
           val digestBefore = digest(path)
           Repr.flip(tree.incoming, version, Unpacked)
           deleteDirectory(tree.incoming(version).map(tree.incoming / (_, Unpacked)).getOrElse(sys.error("something went wrong")))

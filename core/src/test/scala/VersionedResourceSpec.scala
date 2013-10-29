@@ -13,13 +13,13 @@ class VersionedResourceSpec extends Specification with TestUtils {
       tree.init(ignoreExisting = true)
       object HelloResource extends VersionedResource(
         tree,
-        create = path => read(path / "hello.txt"): String)
+        create = path => readFrom(path / "hello.txt"): String)
       HelloResource.start()
 
       def swap() = {
         val version =
           for (dir <- tree.incoming.create(repr = Unpacked)) yield {
-            write("Hello, "+dir.version, tree.incoming / (dir -> Unpacked) / "hello.txt")
+            writeTo("Hello, "+dir.version, tree.incoming / (dir -> Unpacked) / "hello.txt")
             tree.incoming.transition(dir.version, state = Dir.Ready)
             tree.append(dir.version)
             tree.activate(dir.version)

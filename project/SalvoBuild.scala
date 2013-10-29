@@ -24,7 +24,7 @@ object BuildSettings {
 
   lazy val buildSettings = Defaults.defaultSettings ++ Seq(
     organization := "com.bumnetworks",
-    version := "0.0.1-SNAPSHOT",
+    version := "0.0.1",
     scalaVersion := "2.10.3",
     crossScalaVersions := Seq("2.9.2", "2.10.3"),
     scalacOptions <++= scalaVersion map {
@@ -50,19 +50,22 @@ object BuildSettings {
     testFrameworks += TestFrameworks.Specs,
     offline := false,
     initialCommands in console in Test := """""",
-    publishTo <<= (version, baseDirectory)({
-      (v, base) =>
-      val repo = base / ".." / "repo"
-      Some(Resolver.file("repo",
-        if (v.trim.endsWith("SNAPSHOT")) repo / "snapshots"
-        else repo / "releases"))
-    }),
     resolvers ++= Seq(
       "max's clubhouse - releases" at "https://raw.github.com/maxaf/repo/master/releases/",
       "max's clubhouse - snapshots" at "https://raw.github.com/maxaf/repo/master/snapshots/",
       "JBoss Thirdparty Releases" at "https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/"
     )
   ) ++ scalariformSettings ++ formatSettings
+
+  lazy val publishSettings = Seq(
+    publishTo <<= (version) {
+      v =>
+      val repo = file(".") / ".." / "repo"
+      Some(Resolver.file("repo",
+        if (v.trim.endsWith("SNAPSHOT")) repo / "snapshots"
+        else repo / "releases"))
+    }
+  )
 
   lazy val formatSettings = Seq(
     ScalariformKeys.preferences in Compile := formattingPreferences,
@@ -121,25 +124,25 @@ object SalvoBuild extends Build {
 
   lazy val util = Project(
     id = "salvo-util", base = file("util"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= UtilDeps))
+    settings = buildSettings ++ publishSettings ++ Seq(libraryDependencies ++= UtilDeps))
 
   lazy val tree = Project(
     id = "salvo-tree", base = file("tree"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= TreeDeps)
+    settings = buildSettings ++ publishSettings ++ Seq(libraryDependencies ++= TreeDeps)
   ) dependsOn(util % "test->test;compile->compile")
 
   lazy val core = Project(
     id = "salvo-core", base = file("core"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= CoreDeps)) dependsOn(tree % "test->test;compile->compile")
+    settings = buildSettings ++ publishSettings ++ Seq(libraryDependencies ++= CoreDeps)) dependsOn(tree % "test->test;compile->compile")
 
   lazy val dist = Project(
     id = "salvo-dist", base = file("dist"),
-    settings = buildSettings ++ Seq(libraryDependencies ++= DistDeps)
+    settings = buildSettings ++ publishSettings ++ Seq(libraryDependencies ++= DistDeps)
   ) dependsOn(core % "test->test;compile->compile", ttorrent)
 
   lazy val actions = Project(
     id = "salvo-actions", base = file("actions"),
-    settings = buildSettings
+    settings = buildSettings ++ publishSettings
   ) dependsOn(dist % "test->test;compile->compile")
 
   lazy val executableName = settingKey[String]("name of executable bundle")
@@ -159,6 +162,7 @@ object SalvoBuild extends Build {
   lazy val cli = Project(
     id = "salvo-cli", base = file("cli"),
     settings = buildSettings ++ Seq(libraryDependencies ++= CliDeps) ++ assemblySettings ++ Seq(
+      publish := {},
       mainClass in assembly := Some("salvo.cli.Main"),
       test in assembly := {},
       jarName in assembly <<= (name, version) map { (n, v) => s"${n}-${v}.jar" },

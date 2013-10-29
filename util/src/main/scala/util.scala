@@ -10,6 +10,8 @@ import org.apache.commons.io.FileUtils.iterateFilesAndDirs
 import org.apache.commons.io.filefilter.TrueFileFilter
 
 object `package` extends Logging {
+  def ???[T]: T = throw new UnsupportedOperationException("not implemented")
+
   type File = java.io.File
   type Path = java.nio.file.Path
 
@@ -70,12 +72,12 @@ object `package` extends Logging {
     case _          => InetAddress.getByName("0.0.0.0")
   }
 
-  def read(from: Path): Array[Byte] =
+  def readFrom(from: Path): Array[Byte] =
     readStream(new FileInputStream(from))
 
   implicit def bytes2string(a: Array[Byte]): String = new String(a, "UTF-8")
 
-  def write(bytes: Array[Byte], to: Path, append: Boolean = false): Unit = {
+  def writeTo(bytes: Array[Byte], to: Path, append: Boolean = false): Unit = {
     val out = new BufferedOutputStream(new FileOutputStream(to, append))
     copyStream(
       new BufferedInputStream(new ByteArrayInputStream(bytes)),

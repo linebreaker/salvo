@@ -30,7 +30,7 @@ class PackedActionsSpec extends Specification with TestUtils with Logging {
 
       val digestBefore =
         for (path <- first.incoming(version).map(first.incoming / (_, Unpacked) / "garbage")) yield {
-          write(random(1024 * 1024 * 10), path)
+          writeTo(random(1024 * 1024 * 10), path)
           digest(path)
         }
       digestBefore must beSome[String]
