@@ -24,7 +24,7 @@ object BuildSettings {
 
   lazy val buildSettings = Defaults.defaultSettings ++ Seq(
     organization := "com.bumnetworks",
-    version := "0.0.3-SNAPSHOT",
+    version := "0.0.3",
     scalaVersion := "2.10.3",
     crossScalaVersions := Seq("2.9.2", "2.10.3"),
     scalacOptions <++= scalaVersion map {
@@ -139,6 +139,11 @@ object SalvoBuild extends Build {
     id = "salvo-core", base = file("core"),
     settings = buildSettings ++ publishSettings ++ Seq(libraryDependencies ++= CoreDeps)) dependsOn(tree % "test->test;compile->compile")
 
+  lazy val sqlite = Project(
+    id = "salvo-sqlite", base = file("sqlite"),
+    settings = buildSettings ++ publishSettings ++ Seq(libraryDependencies ++= SqliteDeps)
+  ) dependsOn(core % "test->test;compile->compile")
+
   lazy val dist = Project(
     id = "salvo-dist", base = file("dist"),
     settings = buildSettings ++ publishSettings ++ Seq(libraryDependencies ++= DistDeps)
@@ -147,11 +152,6 @@ object SalvoBuild extends Build {
   lazy val actions = Project(
     id = "salvo-actions", base = file("actions"),
     settings = buildSettings ++ publishSettings
-  ) dependsOn(dist % "test->test;compile->compile")
-
-  lazy val sqlite = Project(
-    id = "salvo-sqlite", base = file("sqlite"),
-    settings = buildSettings ++ publishSettings ++ Seq(libraryDependencies ++= SqliteDeps)
   ) dependsOn(dist % "test->test;compile->compile")
 
   lazy val executableName = settingKey[String]("name of executable bundle")
