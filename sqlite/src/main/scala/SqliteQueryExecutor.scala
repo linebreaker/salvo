@@ -42,10 +42,10 @@ class SqliteQueryExecutor(db: String, readOnly: Boolean)(implicit dir: SqliteDir
       var conn = Option.empty[Connection]
       try {
         conn = Some(DriverManager.getConnection(jdbcUrl, sqliteConfig.toProperties))
+        conn.map(f).getOrElse(sys.error("???"))
       }
       finally {
         conn.foreach(_.close())
       }
-      conn.map(f).getOrElse(sys.error("???"))
     }
 }
