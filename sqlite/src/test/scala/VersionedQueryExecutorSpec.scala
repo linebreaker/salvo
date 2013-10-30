@@ -15,9 +15,9 @@ class VersionedQueryExecutorSpec extends Specification with TestUtils {
       tree.init(ignoreExisting = true)
 
       class MyBirthday(readOnly: Boolean = true)(implicit dir: SqliteDir) extends Executors {
-        object Coming extends Executor("coming", readOnly = readOnly)
-        object Undecided extends Executor("undecided", readOnly = readOnly)
-        object NotComing extends Executor("not_coming", readOnly = readOnly)
+        object Coming extends Executor("coming", readOnly = readOnly) with SqliteQueryExecutor
+        object Undecided extends Executor("undecided", readOnly = readOnly) with SqliteQueryExecutor
+        object NotComing extends Executor("not_coming", readOnly = readOnly) with SqliteQueryExecutor
       }
 
       object TestExecutors extends VersionedQueryExecutors(tree, new MyBirthday()(_))

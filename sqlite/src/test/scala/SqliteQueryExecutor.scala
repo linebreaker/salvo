@@ -1,16 +1,21 @@
-package salvo.sqlite
+package salvo.sqlite.test
 
 import scala.util.control.Exception.allCatch
 import salvo.util._
 import salvo.tree._
 import salvo.core._
+import salvo.sqlite._
 import org.sqlite.{ SQLiteOpenMode, SQLiteConfig, JDBC }
 import com.jolbox.bonecp.BoneCPConfig
 import java.sql.{ DriverManager, Connection }
 import com.novus.jdbc.bonecp.DebonedQueryExecutor
 import com.novus.jdbc.sqlite.Sqlite
 
-class SqliteQueryExecutor(db: String, readOnly: Boolean)(implicit dir: SqliteDir) {
+trait SqliteQueryExecutor {
+  val dir: SqliteDir
+  val db: String
+  val readOnly: Boolean
+
   private val path = dir / "%s.sqlite3".format(db)
   private val jdbcUrl = "jdbc:sqlite:%s".format(path.toAbsolutePath)
 
