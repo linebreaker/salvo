@@ -38,7 +38,7 @@ class PackedActionsSpec extends Specification with TestUtils with Logging {
       first.append(version)
 
       val seed = new SeedAction(first, version, duration = 15)()
-      val leech = new LeechAction(second, version, new InetSocketAddress(InetAddress.getByName("0.0.0.0"), 44663), duration = 15)()
+      val leech = new LeechAction(second, Some(version), new InetSocketAddress(InetAddress.getByName("0.0.0.0"), 44663), duration = 15)()
 
       seed.start()
       leech.start()

@@ -111,20 +111,20 @@ object LeechVersion extends Command("leech-version") with Util with Logging {
   def init(parser: Parser) =
     List(
       parser.opt[InetSocketAddress]("server") required () action localConfig.admit(s => localConfig.server = Some(s)),
-      parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v)),
+      parser.opt[Version]("version") optional () action localConfig.admit(v => localConfig.version = Some(v)),
       parser.opt[Int]("duration") action localConfig.admit(d => localConfig.duration = d),
       parser.opt[InetAddress]("addr") action localConfig.admit(a => localConfig.addr = a))
   def apply(config: Config) {
     val tree = validate(config)
     val dist = new Dist(tree)
-    for (version <- localConfig.version; server <- localConfig.server) {
+    for (server <- localConfig.server) {
       // first leech
-      val leech = (new LeechAction(tree, version, server, localConfig.duration, localConfig.addr))()
+      val leech = (new LeechAction(tree, localConfig.version, server, localConfig.duration, localConfig.addr))()
       leech.start()
       leech.await()
       leech.stop()
       // then serve
-      val seed = (new ServeAction(tree, version, localConfig.duration))()
+      val seed = (new ServeAction(tree, leech.leech.version, localConfig.duration))()
       seed.start()
       seed.await()
       seed.stop()

@@ -3,7 +3,7 @@ package salvo.util
 import java.security._
 import java.io.{ BufferedInputStream, ByteArrayInputStream, BufferedOutputStream, FileOutputStream, FileInputStream }
 import java.nio.file.{ Paths, Files }
-import java.net.{ InetAddress, NetworkInterface, URI }
+import java.net.{ InetAddress, InetSocketAddress, NetworkInterface, URI, URL }
 import scala.collection.JavaConversions._
 import org.apache.commons.io.IOUtils.{ copy => copyStream, toByteArray => readStream }
 import org.apache.commons.io.FileUtils.iterateFilesAndDirs
@@ -85,6 +85,18 @@ object `package` extends Logging {
 
   def traverse(path: Path): Iterator[Path] =
     iterateFilesAndDirs(path, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE).map(fileToPath)
+
+  def GET(url: URL) = new {
+    def stream = allCatch.either(url.openConnection().getInputStream)
+    def string = for (s <- stream.right) yield new String(readStream(s), "UTF-8")
+    def save(path: Path) = for (s <- stream.right) yield copyStream(s, new FileOutputStream(path))
+  }
+
+  def server(hostAndPort: String) =
+    hostAndPort.split(":") match {
+      case Array(host, port) => new InetSocketAddress(host, port.toInt)
+      case _                 => sys.error("unable to read "+hostAndPort+" as a InetSocketAddress")
+    }
 }
 
 class PimpedPath(path: Path) {

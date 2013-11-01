@@ -112,7 +112,7 @@ object Deps {
   val UtilDeps = Seq(slf4j_api, slf4j_simple % "test", commons_io)
   val TreeDeps = Seq(commons_lang % "test", commons_codec % "test")
   val CoreDeps = Seq()
-  val DistDeps = Seq(jargs, simpleframework, jetty("server"), commons_codec)
+  val DistDeps = Seq(jargs, simpleframework, jetty("server"), jetty("servlet"), commons_codec)
   val SqliteDeps = Seq(sqlite_jdbc, novus_jdbc, novus_jdbc_bonecp)
   val CliDeps = Seq(scopt, logback)
 }
