@@ -92,11 +92,13 @@ object `package` extends Logging {
     def save(path: Path) = for (s <- stream.right) yield copyStream(s, new FileOutputStream(path))
   }
 
-  def server(hostAndPort: String) =
+  def socketAddress(hostAndPort: String): InetSocketAddress =
     hostAndPort.split(":") match {
       case Array(host, port) => new InetSocketAddress(host, port.toInt)
       case _                 => sys.error("unable to read "+hostAndPort+" as a InetSocketAddress")
     }
+
+  def socketAddress(port: Int): InetSocketAddress = socketAddress("0.0.0.0:"+port)
 }
 
 class PimpedPath(path: Path) {

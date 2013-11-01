@@ -3,15 +3,19 @@ package salvo.actions
 import salvo.util._
 import salvo.tree._
 import salvo.dist._
-import java.net.InetAddress
+import java.net.{ InetSocketAddress, InetAddress }
 
-class SeedAction(tree: Tree, version: Version, duration: Int, addr: InetAddress = oneAddr(ipv4_?)) extends Logging {
+class SeedAction(tree: Tree, version: Version, duration: Int, addr: InetAddress = oneAddr(ipv4_?), serverListen: Option[InetSocketAddress] = None) extends Logging {
   val dist = new Dist(tree)
 
   class run {
     val seed = new dist.PrimarySeed(version, duration, addr)
     logger.info("created seed: "+seed)
-    val server = dist.server()
+
+    val server = serverListen match {
+      case Some(listen) => dist.server(listen)
+      case _            => dist.server()
+    }
 
     def start() {
       seed.start()

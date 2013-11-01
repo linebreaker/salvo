@@ -16,6 +16,6 @@ trait Util {
   implicit val readsDir = reads[Dir](s => Dir(Paths.get(s)).getOrElse(sys.error("could not parse '"+s+"' as a dir")))
   implicit val readsVersion = reads[Version](string2version)
   implicit val readsState = reads[State](s => State(s).getOrElse(sys.error("could not parse '"+s+"' as a state")))
-  implicit val readsInetSocketAddress = reads[InetSocketAddress](server)
+  implicit val readsInetSocketAddress = reads[InetSocketAddress](socketAddress)
   implicit val readsInetAddress = reads[InetAddress](InetAddress.getByName(_))
 }

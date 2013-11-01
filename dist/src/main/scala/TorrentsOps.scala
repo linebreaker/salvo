@@ -7,14 +7,15 @@ import org.eclipse.jetty.server.{ Handler, Server }
 import org.eclipse.jetty.server.handler.{ DefaultHandler, HandlerList, ResourceHandler }
 import org.eclipse.jetty.servlet.{ ServletHandler, ServletHolder }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
+import java.net.InetSocketAddress
 
 trait TorrentsOps {
   dist: Dist =>
 
-  val Port = 44663 // XXX: ??? unhardcode me
+  val DefaultPort = 44663
 
-  def server() = {
-    val server = new Server(Port)
+  def server(listen: InetSocketAddress = socketAddress(DefaultPort)) = {
+    val server = new Server(listen)
 
     val resource_handler = new ResourceHandler()
     resource_handler.setDirectoriesListed(true)
