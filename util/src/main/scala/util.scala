@@ -1,6 +1,5 @@
 package salvo.util
 
-import java.security._
 import java.io.{ BufferedInputStream, ByteArrayInputStream, BufferedOutputStream, FileOutputStream, FileInputStream }
 import java.nio.file.{ Paths, Files }
 import java.net.{ InetAddress, InetSocketAddress, NetworkInterface, URI, URL }
@@ -43,12 +42,6 @@ object `package` extends Logging {
   def mv(src: Path, dst: Path) = src.renameTo(dst)
 
   implicit def pimpPath(path: Path) = new PimpedPath(path)
-
-  def priv[T](op: => T): Either[Throwable, T] =
-    allCatch.either(
-      AccessController.doPrivileged(new PrivilegedAction[T] {
-        def run() = op
-      }))
 
   def useAndReturn[A, B](resource0: => A)(op: A => B): A = {
     val resource = resource0

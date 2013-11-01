@@ -15,9 +15,9 @@ trait LeechOps {
 
   class RemoteServer(server: InetSocketAddress) {
     def url(rest: String) = new URL("http://"+server.getHostName()+":"+server.getPort() + rest)
-    def current() =
+    def latest() =
       for {
-        versionS <- GET(url("/current-version.do")).string.right
+        versionS <- GET(url("/latest-version.do")).string.right
         version <- Right(Version(versionS.trim)).right
       } yield version
     def torrent(version: Version, saveTo: Path) =
@@ -29,7 +29,7 @@ trait LeechOps {
 
   class Leech(val version: Version, server: InetSocketAddress, addr: InetAddress = oneAddr(ipv4_?)) {
     def this(server: InetSocketAddress, addr: InetAddress = oneAddr(ipv4_?)) =
-      this(remote(server).current().fold(throw _, _.getOrElse(???)), server, addr)
+      this(remote(server).latest().fold(throw _, _.getOrElse(???)), server, addr)
     lazy val remote = new RemoteServer(server)
     lazy val torrent = remote.torrent(version, dir / (version+".torrent"))
     lazy val dest = tree.incoming.create(version, repr = Packed).map(tree.incoming.dir / _.path).getOrElse(???)

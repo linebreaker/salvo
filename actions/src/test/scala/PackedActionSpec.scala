@@ -50,7 +50,7 @@ class PackedActionsSpec extends Specification with TestUtils with Logging {
       second.history(version).map(second.history / (_, Unpacked) / "garbage") must eventually(retries = 10, sleep = 3.seconds)(
         beSome[Path].which(after => digestBefore must beSome[String].which(before => before must_== digest(after))))
     }
-    "distribute current packed version" in new UsingTempDir {
+    "distribute latest packed version" in new UsingTempDir {
       val version = Version.now()
 
       object first extends Tree(tempDir / "first")
@@ -75,7 +75,6 @@ class PackedActionsSpec extends Specification with TestUtils with Logging {
 
       first.incoming.transition(version, state = Dir.Ready)
       first.append(version)
-      first.activate(version)
 
       val serverListen = socketAddress("0.0.0.0:44664")
 

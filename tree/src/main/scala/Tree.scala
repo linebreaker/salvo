@@ -30,36 +30,4 @@ class Tree(val root: Path) {
         }
       case _ => None
     }
-
-  def activate(version: Version): Option[Version] =
-    current() match {
-      case Some(Dir(activeVersion, _)) if activeVersion == version => Some(activeVersion)
-      case _ =>
-        history(version).flatMap {
-          case dir @ Dir(_, Dir.Ready) =>
-            current.unlink()
-            current.create(history / (dir, Unpacked))
-            Some(version)
-        } orElse (sys.error("unable to activate non-existent version "+version))
-    }
-
-  object current {
-    val link = root / "current"
-    def validate(): Boolean = symlink(link) && directory(link)
-    def create(path: Path) {
-      Files.createSymbolicLink(link, path.toAbsolutePath())
-    }
-    def unlink() = if (validate()) Files.delete(link)
-    def apply(): Option[Dir] =
-      if (validate()) {
-        val candidates = Iterator(
-          () => Files.readSymbolicLink(link),
-          () => Files.readSymbolicLink(link).getParent())
-        candidates.foldLeft(Option.empty[Dir]) {
-          case (found @ Some(_), _) => found
-          case (_, candidate)       => allCatch.opt(candidate()).flatMap(Version(_)).flatMap(history(_))
-        }
-      }
-      else None
-  }
 }

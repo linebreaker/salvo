@@ -74,17 +74,6 @@ object AppendVersion extends Command("append-version") with Util {
   }
 }
 
-object ActivateVersion extends Command("activate-version") with Util {
-  class LC(var version: Option[Version] = None) extends LocalConfig
-  val localConfig = new LC()
-  def init(parser: Parser) =
-    (parser.opt[Version]("version") required () action localConfig.admit(v => localConfig.version = Some(v))) :: Nil
-  def apply(config: Config) {
-    val tree = validate(config)
-    for (version <- localConfig.version) tree.activate(version)
-  }
-}
-
 object SeedVersion extends Command("seed-version") with Util with Logging {
   class LC(var version: Option[Version] = None, var duration: Int = 3600, var addr: InetAddress = oneAddr(ipv4_?)) extends LocalConfig
   val localConfig = new LC()

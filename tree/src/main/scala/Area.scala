@@ -15,6 +15,7 @@ abstract class Area(dir: Path) {
   def contents(version: Version, repr: Repr): Iterator[Path] =
     this(version).map(d => traverse(this / (d -> repr))).getOrElse(Iterator.empty)
   def apply(version: Version): Option[Dir] = Dir.load(dir)(version)
+  def latest()(implicit ord: Ordering[Dir]): Option[Dir] = list().sorted(ord.reverse).headOption
   private def /(next: Dir): Path = dir / next.path
   def /(next: (Dir, Repr)): Path = {
     val bare = this / next._1

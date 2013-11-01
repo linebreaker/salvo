@@ -22,7 +22,6 @@ class VersionedResourceSpec extends Specification with TestUtils {
             writeTo("Hello, "+dir.version, tree.incoming / (dir -> Unpacked) / "hello.txt")
             tree.incoming.transition(dir.version, state = Dir.Ready)
             tree.append(dir.version)
-            tree.activate(dir.version)
             dir.version
           }
 

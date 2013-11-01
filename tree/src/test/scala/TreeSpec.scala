@@ -25,33 +25,16 @@ class TreeSpec extends Specification with TestUtils {
       tree.incoming.create(version, state = Dir.Incomplete, repr = Unpacked)
       tree.append(version) must beNone
     }
-    "activate ready versions" in new UsingTempDir {
+    "detect latest version" in new UsingTempDir {
       object tree extends Tree(tempDir)
       tree.init()
       tree.validate()
-      val versions = List.fill(10)(Version.now()).flatMap {
-        version =>
-          tree.incoming.create(version, state = Dir.Incomplete, repr = Unpacked)
-          tree.incoming.transition(version, state = Dir.Ready)
-          tree.append(version)
+      for (version <- List.fill(10)(Version.now())) {
+        tree.incoming.create(version, state = Dir.Incomplete, repr = Unpacked)
+        tree.incoming.transition(version, state = Dir.Ready)
+        tree.append(version)
+        tree.history.latest() must beSome[Dir].which(_.version == version)
       }
-      for (version <- versions) {
-        tree.activate(version) must beSome[Version].which(_ == version)
-        tree.current() must beSome[Dir].which(_.version == version)
-      }
-    }
-    "unlink current version" in new UsingTempDir {
-      val version = Version.now()
-      object tree extends Tree(tempDir)
-      tree.init()
-      tree.validate()
-      tree.incoming.create(version, state = Dir.Incomplete, repr = Unpacked)
-      tree.incoming.transition(version, state = Dir.Ready)
-      tree.append(version) must beSome[Version]
-      tree.activate(version) must beSome[Version].which(_ == version)
-      tree.current() must beSome[Dir].which(_.version == version)
-      tree.current.unlink()
-      tree.current() must beNone
     }
     "preserve packed version contents" in new UsingTempDir {
       val version = Version.now()
@@ -66,11 +49,9 @@ class TreeSpec extends Specification with TestUtils {
           val digestBefore = digest(path)
           tree.incoming.transition(version, state = Dir.Ready)
           tree.append(version) must beSome[Version]
-          tree.current() must beNone
-          tree.activate(version) must beSome[Version].which(_ == version)
-          tree.current() must beSome[Dir].which(_.version == version)
-          val digestAfter = digest(tree.current.link / "garbage")
-          digestBefore must_== digestAfter
+          tree.history(version).map(tree.history / (_, Unpacked) / "garbage") must beSome[Path].which {
+            after => digest(after) must_== digestBefore
+          }
       }
     }
     "preserve repacked version contents" in new UsingTempDir {
@@ -88,11 +69,9 @@ class TreeSpec extends Specification with TestUtils {
           deleteDirectory(tree.incoming(version).map(tree.incoming / (_, Unpacked)).getOrElse(sys.error("something went wrong")))
           tree.incoming.transition(version, state = Dir.Ready)
           tree.append(version) must beSome[Version]
-          tree.current() must beNone
-          tree.activate(version) must beSome[Version].which(_ == version)
-          tree.current() must beSome[Dir].which(_.version == version)
-          val digestAfter = digest(tree.current.link / "garbage")
-          digestBefore must_== digestAfter
+          tree.history(version).map(tree.history / (_, Unpacked) / "garbage") must beSome[Path].which {
+            after => digest(after) must_== digestBefore
+          }
       }
     }
   }

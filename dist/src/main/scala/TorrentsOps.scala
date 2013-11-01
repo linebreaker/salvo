@@ -22,7 +22,7 @@ trait TorrentsOps {
     resource_handler.setResourceBase(dir.toAbsolutePath().toString)
 
     val servlets = new ServletHandler()
-    servlets.addServletWithMapping(new ServletHolder(new CurrentVersion), "/current-version.do")
+    servlets.addServletWithMapping(new ServletHolder(new LatestVersion), "/latest-version.do")
 
     val handlers = new HandlerList()
     handlers.setHandlers(Array(servlets, resource_handler))
@@ -32,9 +32,9 @@ trait TorrentsOps {
     server
   }
 
-  class CurrentVersion extends HttpServlet {
+  class LatestVersion extends HttpServlet {
     override def doGet(req: HttpServletRequest, res: HttpServletResponse) {
-      dist.tree.current() match {
+      dist.tree.history.latest() match {
         case Some(Dir(version, _)) =>
           res.setStatus(HttpServletResponse.SC_OK)
           res.getWriter.println(version.toString)
