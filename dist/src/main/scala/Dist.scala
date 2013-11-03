@@ -28,5 +28,13 @@ class Dist(val tree: Tree) extends SeedOps with LeechOps with TorrentsOps with L
     }
   }
 
+  def downloading_?(client: Client) = {
+    import Client.ClientState._
+    client.getState() match {
+      case SHARING | WAITING | VALIDATING => true
+      case _                              => false
+    }
+  }
+
   def seed_?(version: Version) = tree.history(version).nonEmpty
 }
