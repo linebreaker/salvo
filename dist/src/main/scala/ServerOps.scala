@@ -9,7 +9,7 @@ import org.eclipse.jetty.servlet.{ ServletHandler, ServletHolder }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 import java.net.InetSocketAddress
 
-trait TorrentsOps {
+trait ServerOps {
   dist: Dist =>
 
   val DefaultPort = 44663

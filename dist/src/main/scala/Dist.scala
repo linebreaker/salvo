@@ -4,7 +4,7 @@ import salvo.util._
 import salvo.tree._
 import com.turn.ttorrent.client.Client
 
-class Dist(val tree: Tree) extends SeedOps with LeechOps with TorrentsOps with Logging {
+class Dist(val tree: Tree) extends SeedOps with LeechOps with ServerOps with Logging {
   dist =>
 
   lazy val dir = tree.root / "torrents"
