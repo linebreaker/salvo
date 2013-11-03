@@ -188,7 +188,7 @@ object SalvoBuild extends Build {
         (n, v, ct, ass) =>
         val exe = file("salvo")
         import java.nio.file.{Files, Paths}
-        val launcher = s"""#!env bash
+        val launcher = s"""#!/usr/bin/env bash
         |SALVO_BUILD=${v}
         |SALVO_JAR=${ass.getName}
         |SALVO_JAR_DIR=/usr/share/salvo
@@ -196,7 +196,11 @@ object SalvoBuild extends Build {
         |if [ -f $$SALVO_CROSS_TARGET/$$SALVO_JAR ]; then
         |  SALVO_JAR_DIR=$$SALVO_CROSS_TARGET
         |fi
-        |exec env java -Xmx2g -Dsalvo.build=$$SALVO_BUILD -jar $$SALVO_JAR_DIR/$$SALVO_JAR $$@
+        |JVM_OPTS=-Xmx2g
+        |if [ "$$xSALVO_JVM_OPTS" != "x" ]; then
+        |  JVM_OPTS=$$SALVO_JVM_OPTS
+        |fi
+        |exec env java $$JVM_OPTS -Dsalvo.build=$$SALVO_BUILD -jar $$SALVO_JAR_DIR/$$SALVO_JAR $$@
         |""".stripMargin
         IO.writeLines(file = exe, lines = launcher.split("\n").toList, append = false)
         import java.util.HashSet
