@@ -196,7 +196,7 @@ object SalvoBuild extends Build {
         |if [ -f $$SALVO_CROSS_TARGET/$$SALVO_JAR ]; then
         |  SALVO_JAR_DIR=$$SALVO_CROSS_TARGET
         |fi
-        |JVM_OPTS=-Xmx2g
+        |JVM_OPTS=-Xmx1g
         |if [ "$$xSALVO_JVM_OPTS" != "x" ]; then
         |  JVM_OPTS=$$SALVO_JVM_OPTS
         |fi
