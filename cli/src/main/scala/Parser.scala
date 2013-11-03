@@ -22,6 +22,7 @@ class Parser extends scopt.OptionParser[Config]("salvo") {
   help("help")
 
   command(Init)
+  command(Clean)
   command(CreateVersion)
   command(TransitionVersion)
   command(AppendVersion)

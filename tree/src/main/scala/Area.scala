@@ -37,4 +37,7 @@ abstract class Area(dir: Path) {
   def drop(version: Version) {
     for (path <- this(version).map(this / _)) deleteDirectory(path)
   }
+
+  protected def cleanFiltered(filter: Dir => Boolean) = list().filter(filter).map(_.version).foreach(drop)
+  def clean(): Unit
 }

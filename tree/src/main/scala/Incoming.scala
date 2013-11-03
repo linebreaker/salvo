@@ -15,4 +15,6 @@ abstract class Incoming(val dir: Path) extends Area(dir) {
       Dir.transition(dir)(d, state)
     }
   }
+
+  def clean() = cleanFiltered(_ => true)
 }

@@ -17,6 +17,22 @@ class TreeSpec extends Specification with TestUtils {
       tree.incoming.transition(version, state = Dir.Ready)
       tree.append(version) must beSome[Version].which(_ == version)
     }
+    "clean history" in new UsingTempDir {
+      object tree extends Tree(tempDir)
+      tree.init()
+      tree.validate()
+      val Some(latest) =
+        List.fill(10)(Version.now()).foldLeft(Option.empty[Version]) {
+          (_, version) =>
+            tree.incoming.create(version, state = Dir.Incomplete, repr = Unpacked)
+            tree.incoming.transition(version, state = Dir.Ready)
+            tree.append(version)
+            Some(version)
+        }
+      tree.history.clean()
+      tree.history.latest() must beSome[Dir].which(_.version == latest)
+      tree.history.list().map(_.version) must_== (latest :: Nil)
+    }
     "reject versions that are not ready" in new UsingTempDir {
       val version = Version.now()
       object tree extends Tree(tempDir)

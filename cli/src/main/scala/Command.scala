@@ -34,6 +34,14 @@ object Init extends Command("init") with Util with NilLocalConfig {
   }
 }
 
+object Clean extends Command("clean") with Util with NilLocalConfig {
+  def apply(config: Config) {
+    val tree = validate(config)
+    tree.history.clean()
+    tree.incoming.clean()
+  }
+}
+
 object CreateVersion extends Command("create-version") with NilLocalConfig with Util {
   def apply(config: Config) {
     val tree = validate(config)
