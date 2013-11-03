@@ -89,8 +89,8 @@ class LeechAction(tree: Tree, version: Version, server: InetSocketAddress, durat
           }
         }
 
-      wait(leech.client)(dist.downloading_?)
-      wait(leech.client)((remaining() > 0) && !dist.finished_?(_))
+      wait(leech.client)(Dist.downloading_?)
+      wait(leech.client)((remaining() > 0) && !Dist.finished_?(_))
 
       leech.client.stop()
       leech.client.waitForCompletion()

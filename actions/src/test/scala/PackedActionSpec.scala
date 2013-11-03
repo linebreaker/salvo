@@ -16,7 +16,8 @@ class PackedActionsSpec extends Specification with TestUtils with Logging {
 
       object first extends Tree(tempDir / "first")
       first.init()
-      new Dist(first).init(ignoreExisting = true)
+      val dist = new Dist(first)
+      dist.init(ignoreExisting = true)
 
       object second extends Tree(tempDir / "second")
       second.init()
@@ -37,8 +38,12 @@ class PackedActionsSpec extends Specification with TestUtils with Logging {
       first.incoming.transition(version, state = Dir.Ready)
       first.append(version)
 
-      val seed = new SeedAction(first, version, duration = 15)()
-      val leech = new LeechAction(second, version, new InetSocketAddress(InetAddress.getByName("0.0.0.0"), 44663), duration = 15)()
+      val serverListen = socketAddress("0.0.0.0:44663")
+      val server = new dist.Server(serverListen)
+      server.start()
+
+      val seed = new SeedAction(() => new dist.PrimarySeed(version, duration = 15))()
+      val leech = new LeechAction(second, version, serverListen, duration = 15)()
 
       seed.start()
       leech.start()
@@ -46,6 +51,7 @@ class PackedActionsSpec extends Specification with TestUtils with Logging {
       leech.await()
       seed.stop()
       leech.stop()
+      server.stop()
 
       second.history(version).map(second.history / (_, Unpacked) / "garbage") must eventually(retries = 10, sleep = 3.seconds)(
         beSome[Path].which(after => digestBefore must beSome[String].which(before => before must_== digest(after))))
@@ -55,7 +61,8 @@ class PackedActionsSpec extends Specification with TestUtils with Logging {
 
       object first extends Tree(tempDir / "first")
       first.init()
-      new Dist(first).init(ignoreExisting = true)
+      val dist = new Dist(first)
+      dist.init(ignoreExisting = true)
 
       object second extends Tree(tempDir / "second")
       second.init()
@@ -77,18 +84,18 @@ class PackedActionsSpec extends Specification with TestUtils with Logging {
       first.append(version)
 
       val serverListen = socketAddress("0.0.0.0:44664")
+      val server = new dist.Server(serverListen)
+      server.start()
 
-      val seed = new SeedAction(first, version, duration = 15, serverListen = Some(serverListen))()
+      val seed = new SeedAction(() => new dist.PrimarySeed(version, duration = 15))()
       seed.start()
 
-      val leech = {
-        val dist = new Dist(second)
+      val leech =
         new LeechAction(
           tree = second,
-          version = dist.remote(serverListen).latest_!,
+          version = new Dist(second).remote(serverListen).latest_!,
           server = serverListen,
           duration = 15)()
-      }
       leech.start()
 
       seed.await()
@@ -96,6 +103,8 @@ class PackedActionsSpec extends Specification with TestUtils with Logging {
 
       seed.stop()
       leech.stop()
+
+      server.stop()
 
       second.history(version).map(second.history / (_, Unpacked) / "garbage") must eventually(retries = 10, sleep = 3.seconds)(
         beSome[Path].which(after => digestBefore must beSome[String].which(before => before must_== digest(after))))

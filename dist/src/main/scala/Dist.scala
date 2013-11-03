@@ -2,7 +2,6 @@ package salvo.dist
 
 import salvo.util._
 import salvo.tree._
-import com.turn.ttorrent.client.Client
 
 class Dist(val tree: Tree) extends SeedOps with LeechOps with ServerOps with Logging {
   dist =>
@@ -19,22 +18,21 @@ class Dist(val tree: Tree) extends SeedOps with LeechOps with ServerOps with Log
     tree.validate()
     if (!directory(dir)) sys.error("Torrents dir at "+dir+" does not exist")
   }
+}
 
-  def finished_?(client: Client) = {
-    import Client.ClientState._
+object Dist {
+  import com.turn.ttorrent.client.Client
+  import Client.ClientState._
+
+  def finished_?(client: Client) =
     client.getState() match {
       case SHARING | SEEDING | WAITING | VALIDATING => false
       case _                                        => true
     }
-  }
 
-  def downloading_?(client: Client) = {
-    import Client.ClientState._
+  def downloading_?(client: Client) =
     client.getState() match {
       case SHARING | WAITING | VALIDATING => true
       case _                              => false
     }
-  }
-
-  def seed_?(version: Version) = tree.history(version).nonEmpty
 }

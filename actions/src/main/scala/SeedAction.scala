@@ -5,25 +5,17 @@ import salvo.tree._
 import salvo.dist._
 import java.net.{ InetSocketAddress, InetAddress }
 
-class SeedAction(tree: Tree, version: Version, duration: Int, addr: InetAddress = oneAddr(ipv4_?), serverListen: Option[InetSocketAddress] = None) extends Logging {
-  val dist = new Dist(tree)
-
+class SeedAction(seed0: () => Dist#Seed) extends Logging {
   class run {
-    val seed = new dist.PrimarySeed(version, duration, addr)
+    val seed = seed0()
     logger.info("created seed: "+seed)
-
-    val server = serverListen match {
-      case Some(listen) => dist.server(listen)
-      case _            => dist.server()
-    }
 
     def start() {
       seed.start()
-      server.start()
     }
 
     def await() {
-      while (!dist.finished_?(seed.client)) {
+      while (!Dist.finished_?(seed.client)) {
         logger.info("[ "+seed.trackerURIs.mkString(", ")+" ] seed state: "+seed.client.getState)
         Thread.sleep(1000L)
       }
@@ -31,8 +23,6 @@ class SeedAction(tree: Tree, version: Version, duration: Int, addr: InetAddress 
     }
 
     def stop() {
-      server.stop()
-      server.join()
       logger.info("stopping seed")
       seed.stop()
     }

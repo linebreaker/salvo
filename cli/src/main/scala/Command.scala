@@ -87,12 +87,18 @@ object SeedVersion extends Command("seed-version") with Util with Logging {
       parser.opt[InetAddress]("addr") action localConfig.admit(a => localConfig.addr = a))
   def apply(config: Config) {
     val tree = validate(config)
+    val dist = new Dist(tree)
     for (version <- localConfig.version) {
-      val action = new SeedAction(tree, version, localConfig.duration, localConfig.addr)
+      val server = new dist.Server()
+      server.start()
+
+      val action = new SeedAction(() => new dist.PrimarySeed(version, localConfig.duration, localConfig.addr))
       val run = action()
       run.start()
       run.await()
       run.stop()
+
+      server.stop()
     }
   }
 }
@@ -151,7 +157,7 @@ object ServeVersion extends Command("serve-version") with Util with Logging {
     val tree = validate(config)
     val dist = new Dist(tree)
     for (version <- localConfig.version) {
-      val action = new ServeAction(tree, version, localConfig.duration, localConfig.addr)
+      val action = new SeedAction(() => new dist.SecondarySeed(version, localConfig.duration, localConfig.addr))
       val run = action()
       run.start()
       run.await()
