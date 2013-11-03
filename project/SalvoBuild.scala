@@ -187,7 +187,7 @@ object SalvoBuild extends Build {
       executableName := "salvo",
       executable := {
         val exe = file(executableName.value)
-        IO.writeLines(file = exe, lines = "#!/usr/bin/java -jar" :: Nil, append = false)
+        IO.writeLines(file = exe, lines = "#!/usr/bin/java -Xmx2g -jar" :: Nil, append = false)
         import java.io.{FileInputStream, FileOutputStream}
         IO.transferAndClose(
           in = new FileInputStream(assembly.value),
