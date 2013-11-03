@@ -9,7 +9,7 @@ class LeechAction(tree: Tree, version: Option[Version], server: InetSocketAddres
   val dist = new Dist(tree)
 
   class run {
-    val leech = version.map(new dist.Leech(_, server, addr)).getOrElse(new dist.Leech(server, addr))
+    val leech = version.map(new dist.Leech(_, server, duration, addr)).getOrElse(new dist.Leech(server, duration, addr))
     logger.info("created leech: "+leech)
 
     def start() {

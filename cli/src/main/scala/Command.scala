@@ -112,11 +112,6 @@ object LeechVersion extends Command("leech-version") with Util with Logging {
       leech.start()
       leech.await()
       leech.stop()
-      // then serve
-      val seed = (new ServeAction(tree, leech.leech.version, localConfig.duration))()
-      seed.start()
-      seed.await()
-      seed.stop()
     }
   }
 }
