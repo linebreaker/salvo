@@ -26,16 +26,11 @@ trait NilLocalConfig {
   def init(parser: Parser) = Nil
 }
 
-object Init extends Command("init") with Util {
-  class InitLocalConfig(var exists: Boolean = false) extends LocalConfig
-  val localConfig = new InitLocalConfig()
-  def init(parser: Parser) =
-    (parser.opt[Boolean]("ignore-existing") action localConfig.admit(localConfig.exists = _)) :: Nil
-
+object Init extends Command("init") with Util with NilLocalConfig {
   def apply(config: Config) {
     val tree = new Tree(config.root)
-    tree.init(ignoreExisting = localConfig.exists)
-    new Dist(tree).init(ignoreExisting = localConfig.exists)
+    tree.init(ignoreExisting = true)
+    new Dist(tree).init(ignoreExisting = true)
   }
 }
 
