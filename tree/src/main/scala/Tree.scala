@@ -3,7 +3,7 @@ package salvo.tree
 import java.nio.file.Files
 import salvo.util._
 
-class Tree(val root: Path) {
+class Tree(val root: Path) extends Logging {
   object incoming extends Incoming(root / "incoming")
 
   object history extends History(root / "history") {
@@ -26,7 +26,12 @@ class Tree(val root: Path) {
       case dir @ Dir(_, Dir.Ready) =>
         history(version) match {
           case Some(_) => sys.error(history+" already contains version "+version)
-          case _       => Some(version).filter(_ => mv(incoming.dir / dir.path, history.dir / dir.path))
+          case _ =>
+            Some(version).filter(_ => mv(incoming.dir / dir.path, history.dir / dir.path)).map {
+              appended =>
+                logger.info(root.getFileName+": appended: "+appended)
+                appended
+            }
         }
       case _ => None
     }
