@@ -25,7 +25,6 @@ object LeechAction {
       override def run() {
         while (continue.get()) {
           try {
-            Thread.sleep(delay)
             for (latestRemote <- foldTry(tryRemote(), _.fold(bad => logger.warn(log("Tried remote: "+bad)), _ => ()))) {
               val latestLocal = foldTry(tryLocal())
               val accept = latestLocal.map(Version.ordering.gt(latestRemote, _)).getOrElse(true)
@@ -38,6 +37,7 @@ object LeechAction {
                 run.stop()
               }
             }
+            Thread.sleep(delay)
           }
           catch {
             case ie: InterruptedException => // do nothing

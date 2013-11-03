@@ -121,17 +121,18 @@ object LeechVersion extends Command("leech-version") with Util with Logging {
 }
 
 object Watch extends Command("watch") with Util with Logging {
-  class LC(var server: Option[InetSocketAddress] = None, var duration: Int = 3600, var addr: InetAddress = oneAddr(ipv4_?)) extends LocalConfig
+  class LC(var server: Option[InetSocketAddress] = None, var duration: Int = 3600, var delay: Long = 1000L, var addr: InetAddress = oneAddr(ipv4_?)) extends LocalConfig
   val localConfig = new LC()
   def init(parser: Parser) =
     List(
       parser.opt[InetSocketAddress]("server") required () action localConfig.admit(s => localConfig.server = Some(s)),
       parser.opt[Int]("duration") action localConfig.admit(d => localConfig.duration = d),
+      parser.opt[Long]("delay") action localConfig.admit(d => localConfig.delay = d),
       parser.opt[InetAddress]("addr") action localConfig.admit(a => localConfig.addr = a))
   def apply(config: Config) {
     val tree = validate(config)
     for (server <- localConfig.server) {
-      val watcher = new LeechAction.Watcher(tree, server, localConfig.duration, addr = localConfig.addr)
+      val watcher = new LeechAction.Watcher(tree, server, localConfig.duration, localConfig.delay, localConfig.addr)
       watcher.start()
       watcher.join()
     }
