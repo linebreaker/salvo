@@ -154,16 +154,16 @@ object SalvoBuild extends Build {
     settings = buildSettings ++ publishSettings
   ) dependsOn(dist % "test->test;compile->compile")
 
-  lazy val executableName = settingKey[String]("name of executable bundle")
   lazy val executable = taskKey[File]("create executable bundle from assembly JAR")
 
   lazy val cliPackagerSettings = packagerSettings ++ Seq(
     maintainer := "Max Afonov <max+salvo@bumnetworks.com>",
     packageSummary := "Salvo",
     packageDescription := """http://upload.wikimedia.org/wikipedia/commons/d/d2/USS_New_Jersey_BB-62_salvo_Jan_1953.jpeg""",
-    linuxPackageMappings in Debian <+= (executable) map {
-      exe =>
+    linuxPackageMappings in Debian <+= (assembly, executable) map {
+      (ass, exe) =>
       packageMapping(
+        ass -> ("usr/share/salvo/" + ass.getName),
         exe -> ("usr/bin/" + exe.getName)) withUser "root" withGroup "root" withPerms "0755"
     }
   )
@@ -184,16 +184,22 @@ object SalvoBuild extends Build {
         case PathList("META-INF", x) if x.toLowerCase.endsWith(".rsa") => MergeStrategy.discard
         case _ => MergeStrategy.last
       },
-      executableName := "salvo",
-      executable := {
-        val exe = file(executableName.value)
-        IO.writeLines(file = exe, lines = "#!/usr/bin/java -Xmx2g -jar" :: Nil, append = false)
-        import java.io.{FileInputStream, FileOutputStream}
-        IO.transferAndClose(
-          in = new FileInputStream(assembly.value),
-          out = new FileOutputStream(exe, true))
-        import java.util.HashSet
+      executable <<= (name, version, crossTarget, assembly) map {
+        (n, v, ct, ass) =>
+        val exe = file("salvo")
         import java.nio.file.{Files, Paths}
+        val launcher = s"""#!env bash
+        |SALVO_BUILD=${v}
+        |SALVO_JAR=${ass.getName}
+        |SALVO_JAR_DIR=/usr/share/salvo
+        |SALVO_CROSS_TARGET=`dirname $$0`/${Paths.get("").toAbsolutePath().relativize(Paths.get(ct.toURI))}
+        |if [ -f $$SALVO_CROSS_TARGET/$$SALVO_JAR ]; then
+        |  SALVO_JAR_DIR=$$SALVO_CROSS_TARGET
+        |fi
+        |exec env java -Xmx2g -Dsalvo.build=$$SALVO_BUILD -jar $$SALVO_JAR_DIR/$$SALVO_JAR $$@
+        |""".stripMargin
+        IO.writeLines(file = exe, lines = launcher.split("\n").toList, append = false)
+        import java.util.HashSet
         import java.nio.file.attribute.PosixFilePermission
         val perms = new HashSet[PosixFilePermission]()
         perms.add(PosixFilePermission.OWNER_READ)

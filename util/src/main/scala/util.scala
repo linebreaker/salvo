@@ -11,6 +11,8 @@ import org.apache.commons.io.filefilter.TrueFileFilter
 object `package` extends Logging {
   def ???[T]: T = throw new UnsupportedOperationException("not implemented")
 
+  lazy val Build: String = Option(System.getProperty("salvo.build")).map(_.trim).filterNot(_ == "").getOrElse("dev")
+
   type File = java.io.File
   type Path = java.nio.file.Path
 
