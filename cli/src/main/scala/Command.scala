@@ -145,6 +145,21 @@ object Watch extends Command("watch") with Util with Logging {
   }
 }
 
+object Seed extends Command("seed") with Util with Logging {
+  class LC(var duration: Int = 3600, var addr: InetAddress = oneAddr(ipv4_?)) extends LocalConfig
+  val localConfig = new LC()
+  def init(parser: Parser) =
+    List(
+      parser.opt[Int]("duration") action localConfig.admit(d => localConfig.duration = d),
+      parser.opt[InetAddress]("addr") action localConfig.admit(a => localConfig.addr = a))
+  def apply(config: Config) {
+    val tree = validate(config)
+    val seeder = new SeedAction.Seeder(tree, localConfig.duration, localConfig.addr)
+    seeder.start()
+    seeder.join()
+  }
+}
+
 object ServeVersion extends Command("serve-version") with Util with Logging {
   class LC(var version: Option[Version] = None, var duration: Int = 3600, var addr: InetAddress = oneAddr(ipv4_?)) extends LocalConfig
   val localConfig = new LC()
