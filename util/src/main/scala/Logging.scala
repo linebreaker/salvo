@@ -17,9 +17,9 @@ package salvo.util
 
 /** Mixin providing a Logger for the type mixed into.
  */
-trait Logging {
+private[salvo] trait Logging {
 
   /** Logger for the type mixed into.
    */
-  protected[util] lazy val logger = Logger(this.getClass)
+  protected[salvo] lazy val logger = Logger(this.getClass)
 }
