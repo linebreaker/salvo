@@ -160,6 +160,7 @@ object SalvoBuild extends Build {
     maintainer := "Max Afonov <max+salvo@bumnetworks.com>",
     packageSummary := "Salvo",
     packageDescription := """http://upload.wikimedia.org/wikipedia/commons/d/d2/USS_New_Jersey_BB-62_salvo_Jan_1953.jpeg""",
+    debianPackageDependencies in Debian ++= Seq("pbzip2 (>= 1.1.6)"),
     linuxPackageMappings in Debian <+= (assembly, executable) map {
       (ass, exe) =>
       packageMapping(
