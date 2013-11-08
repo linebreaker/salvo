@@ -192,7 +192,7 @@ object SalvoBuild extends Build {
         val launcher = s"""#!/usr/bin/env bash
         |SALVO_BUILD=${v}
         |SALVO_JAR=${ass.getName}
-        |SALVO_JAR_DIR=/usr/share/salvo
+        |SALVO_JAR_DIR=$${SALVO_JAR_DIR:-/usr/share/salvo}
         |SALVO_CROSS_TARGET=`dirname $$0`/${Paths.get("").toAbsolutePath().relativize(Paths.get(ct.toURI))}
         |if [ -f $$SALVO_CROSS_TARGET/$$SALVO_JAR ]; then
         |  SALVO_JAR_DIR=$$SALVO_CROSS_TARGET
