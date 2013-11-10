@@ -31,7 +31,10 @@ trait LeechOps {
   class Leech(val version: Version, server: InetSocketAddress, duration: Int = 3600, addr: InetAddress = oneAddr(ipv4_?)) {
     lazy val remote = new RemoteServer(server)
     lazy val torrent = remote.torrent(version, dir / (version+".torrent"))
-    lazy val dest = tree.incoming.create(version, repr = Packed).map(tree.incoming.dir / _.path).getOrElse(???)
+    lazy val dest = {
+      if (tree.incoming(version).nonEmpty) tree.incoming.drop(version)
+      tree.incoming.create(version, repr = Packed).map(tree.incoming.dir / _.path).getOrElse(???)
+    }
     lazy val shared = new SharedTorrent(torrent, dest, false)
     lazy val client = new Client(addr, shared)
     def seed(seedDuration: Int = 3600) = new SecondarySeed(version, seedDuration, addr)
