@@ -50,7 +50,7 @@ class PackedActionsSpec extends Specification with TestUtils with Logging {
       seed.await()
       leech.await()
       seed.stop()
-      leech.stop()
+      leech.stop(transition = true)
       server.stop()
 
       second.history(version).map(second.history / (_, Unpacked) / "garbage") must eventually(retries = 10, sleep = 3.seconds)(
@@ -102,7 +102,7 @@ class PackedActionsSpec extends Specification with TestUtils with Logging {
       leech.await()
 
       seed.stop()
-      leech.stop()
+      leech.stop(transition = true)
 
       server.stop()
 

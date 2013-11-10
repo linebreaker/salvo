@@ -2,7 +2,7 @@
 <configuration scan="true" debug="false">
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%.-3p ${HOSTNAME} [%d{yyyyMMdd-HH:mm:ss.SSS}] [%.30t] %c{1} %m%n</pattern>
+            <pattern>%.-3p ${HOSTNAME} [%d{yyyyMMdd-HH:mm:ss.SSS}] %c{1} %m%n</pattern>
         </encoder>
     </appender>
 

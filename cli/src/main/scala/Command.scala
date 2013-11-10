@@ -121,7 +121,7 @@ object LeechVersion extends Command("leech-version") with Util with Logging {
       val leech = (new LeechAction(tree, version, server, localConfig.duration, localConfig.addr))()
       leech.start()
       leech.await()
-      leech.stop()
+      leech.stop(transition = true)
     }
   }
 }
@@ -132,13 +132,12 @@ object Watch extends Command("watch") with Util with Logging {
   def init(parser: Parser) =
     List(
       parser.opt[InetSocketAddress]("server") required () action localConfig.admit(s => localConfig.server = Some(s)),
-      parser.opt[Int]("duration") action localConfig.admit(d => localConfig.duration = d),
       parser.opt[Long]("delay") action localConfig.admit(d => localConfig.delay = d),
       parser.opt[InetAddress]("addr") action localConfig.admit(a => localConfig.addr = a))
   def apply(config: Config) {
     val tree = validate(config)
     for (server <- localConfig.server) {
-      val watcher = new LeechAction.Watcher(tree, server, localConfig.duration, localConfig.delay, localConfig.addr)
+      val watcher = new LeechAction.Watcher(tree, server, localConfig.delay, localConfig.addr)
       watcher.start()
       watcher.join()
     }
@@ -148,13 +147,10 @@ object Watch extends Command("watch") with Util with Logging {
 object Seed extends Command("seed") with Util with Logging {
   class LC(var duration: Int = 3600, var addr: InetAddress = oneAddr(ipv4_?)) extends LocalConfig
   val localConfig = new LC()
-  def init(parser: Parser) =
-    List(
-      parser.opt[Int]("duration") action localConfig.admit(d => localConfig.duration = d),
-      parser.opt[InetAddress]("addr") action localConfig.admit(a => localConfig.addr = a))
+  def init(parser: Parser) = (parser.opt[InetAddress]("addr") action localConfig.admit(a => localConfig.addr = a)) :: Nil
   def apply(config: Config) {
     val tree = validate(config)
-    val seeder = new SeedAction.Seeder(tree, localConfig.duration, localConfig.addr)
+    val seeder = new SeedAction.Seeder(tree, localConfig.addr)
     seeder.start()
     seeder.join()
   }

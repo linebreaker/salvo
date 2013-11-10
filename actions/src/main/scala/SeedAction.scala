@@ -8,35 +8,49 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 object SeedAction {
-  class Seeder(tree: Tree, duration: Int, addr: InetAddress = oneAddr(ipv4_?))(implicit vo: Ordering[Version]) extends Logging {
+  class Seeder(tree: Tree, addr: InetAddress = oneAddr(ipv4_?))(implicit vo: Ordering[Version]) extends Logging {
     private val dist = new Dist(tree)
     private val continue = new AtomicReference(true)
-    private def log(msg: => String) = tree.root+": "+msg
+    private def log(msg: => String) = tree.root.getFileName+": "+msg
     private val tail = new VersionTail(tree.history.dir)
     private def poll() = tail.poll(1, TimeUnit.SECONDS).sorted(vo.reverse).headOption
     private def latest() = tree.history.latest().map(_.version)
     class SeederThread extends Thread(log("SeederThread")) {
+      private var current = Option.empty[(Version, dist.Server, SeedAction#run)]
+      private def begin(version: Version) {
+        val action = new SeedAction(() => new dist.PrimarySeed(version, -1, addr))
+        current = Some(version, useAndReturn(new dist.Server())(_.start()), useAndReturn(action())(_.start()))
+      }
+      private def end() {
+        for ((_, server, cur) <- current) {
+          server.stop()
+          cur.stop()
+        }
+      }
+      private def newer(next: Version) = current match {
+        case Some((version, _, _)) => vo.gt(next, version)
+        case None                  => true
+      }
       override def run() {
+        latest().foreach(begin)
         while (continue.get()) {
           try {
-            (poll() orElse latest()) match {
-              case Some(version) =>
-                val action = new SeedAction(() => new dist.PrimarySeed(version, duration, addr))
-                val run = action()
-                run.start()
-                val server = new dist.Server()
-                server.start()
-                run.await()
-                run.stop()
-                server.stop()
-              case _ =>
-                logger.info(log("waiting for version..."))
+            poll() match {
+              case Some(version) if newer(version) =>
+                end()
+                begin(version)
+              case _ => // do nothing
             }
+            logger.info(current match {
+              case Some((version, _, cur)) => log(Dist.status(client = cur.seed.client, version = Some(version)))
+              case _                       => log("waiting for new version...")
+            })
           }
           catch {
             case ie: InterruptedException => // do nothing
           }
         }
+        end()
       }
     }
     private val thread = new SeederThread()

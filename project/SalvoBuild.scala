@@ -24,7 +24,7 @@ object BuildSettings {
 
   lazy val buildSettings = Defaults.defaultSettings ++ Seq(
     organization := "com.bumnetworks",
-    version := "0.1.1-SNAPSHOT",
+    version := "0.2.2",
     scalaVersion := "2.10.3",
     crossScalaVersions := Seq("2.9.2", "2.10.3"),
     scalacOptions <++= scalaVersion map {
@@ -198,7 +198,7 @@ object SalvoBuild extends Build {
         |  SALVO_JAR_DIR=$$SALVO_CROSS_TARGET
         |fi
         |JVM_OPTS=-Xmx1g
-        |if [ "$$xSALVO_JVM_OPTS" != "x" ]; then
+        |if [ "x$$SALVO_JVM_OPTS" != "x" ]; then
         |  JVM_OPTS=$$SALVO_JVM_OPTS
         |fi
         |exec env java $$JVM_OPTS -Dsalvo.build=$$SALVO_BUILD -jar $$SALVO_JAR_DIR/$$SALVO_JAR $$@
