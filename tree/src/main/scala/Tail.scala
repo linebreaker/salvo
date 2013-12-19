@@ -1,24 +1,25 @@
 package salvo.tree
 
 import salvo.util._
-import java.nio.file.{ Path, StandardWatchEventKinds, WatchEvent, WatchKey, WatchService }
+import java.nio.file.{ Path, StandardWatchEventKinds, WatchEvent, WatchKey }
 import java.util.concurrent.TimeUnit
 import StandardWatchEventKinds._
 import scala.collection.JavaConversions._
+import salvo.sun.nio.fs.PollingWatchService
 
 class Tail[T](val dir: Path, parse: WatchEvent[_] => Option[T]) {
   def validate() {
     if (!directory(dir)) sys.error("%s doesn't exist or isn't a directory".format(dir))
   }
 
-  private var _watcher = Option.empty[WatchService]
+  private var _watcher = Option.empty[PollingWatchService]
   def watcher = _watcher.getOrElse(sys.error(dir+": start() was not called"))
 
   def start() {
     if (_watcher.nonEmpty) sys.error(dir+": start() called more than once")
     validate()
-    _watcher = Option(dir.getFileSystem().newWatchService())
-    dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE)
+    _watcher = Option(new PollingWatchService())
+    watcher.register(dir, Array(ENTRY_CREATE, ENTRY_DELETE))
   }
 
   def stop() {
