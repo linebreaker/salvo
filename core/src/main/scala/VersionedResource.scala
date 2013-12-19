@@ -50,7 +50,9 @@ abstract class VersionedResource[A](tree: Tree, create: Path => Resource[A], des
       tail.stop()
     }
   }
-  private val tailer = new Thread(new Tailer(1L, TimeUnit.SECONDS), id+"/Tailer")
+  private val tailer = new Thread(new Tailer(1L, TimeUnit.SECONDS), id+"/Tailer") {
+    setDaemon(true)
+  }
   def start() {
     tailer.start()
   }

@@ -23,6 +23,7 @@ object LeechAction {
     }
     private def latest() = foldTry(tryRemote(), _.fold(bad => logger.warn(log("Tried remote: "+bad)), _ => ()))
     class WatcherThread extends Thread(log("WatcherThread")) {
+      setDaemon(true)
       private var current = Option.empty[(Version, Either[SeedAction#run, LeechAction#run])]
       private def beginLeech(version: Version) {
         val action = new LeechAction(tree, version, server, -1, addr)

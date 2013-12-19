@@ -16,6 +16,7 @@ object SeedAction {
     private def poll() = tail.poll(1, TimeUnit.SECONDS).sorted(vo.reverse).headOption
     private def latest() = tree.history.latest().map(_.version)
     class SeederThread extends Thread(log("SeederThread")) {
+      setDaemon(true)
       private var current = Option.empty[(Version, dist.Server, SeedAction#run)]
       private def begin(version: Version) {
         val action = new SeedAction(() => new dist.PrimarySeed(version, -1, addr))
