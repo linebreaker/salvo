@@ -44,11 +44,11 @@ object Dist {
       case _                              => false
     }
 
-  def peers(client: Client): List[SharingPeer] =
-    client.getPeers().filter(peer => peer != null && peer.isConnected()).toList
+  def peers(client: Client): Iterator[SharingPeer] =
+    client.getPeers().iterator.filter(peer => peer != null && peer.isConnected())
 
   def rate(client: Client, f: SharingPeer => Rate): Float =
-    peers(client).map(f(_).get()).sum
+    peers(client).map(f).filterNot(_ == null).map(_.get()).sum
 
   def status(client: Client, version: Option[Version] = None) = {
     version.map(v => "["+v+"]").getOrElse("<no version>")+": "+
