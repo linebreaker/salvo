@@ -50,6 +50,9 @@ abstract class VersionedResource[A](tree: Tree, create: Path => Resource[A], des
         catch {
           case ie: InterruptedException =>
             logger.trace(log("interrupted!"))
+          case t: Throwable =>
+            logger.error(log("uncaught exception in body of Tailer"), t)
+            unit.sleep(timeout)
         }
       }
       tail.stop()
