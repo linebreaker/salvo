@@ -4,17 +4,22 @@ import salvo.util._
 import salvo.tree._
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import scala.util.control.Exception.allCatch
 
 abstract class VersionedResource[A](tree: Tree, create: Path => Resource[A], destroy: Resource[A] => Unit = (x: Resource[A]) => ()) extends Logging {
   private val id = "VersionedResource("+tree.root+")"
   private def log(msg: => String) = id+": "+msg
   case class NoVersion(tree: Tree) extends Exception("no version in "+tree.root)
+  case class CreateFailed(cause: Throwable) extends Exception("create failed in "+tree.root, cause)
   def Zero = Left(NoVersion(tree))
-  def create_! =
+  def create_! = {
+      def safeCreate(path: Path): Resource[A] =
+        allCatch.either(create(path)).fold(cause => Left(CreateFailed(cause)), identity)
     tree.history.latest().map(dir => dir.version -> (tree.history / (dir, Unpacked))) match {
-      case Some((version, path)) => create(path).right.map(version -> _)
+      case Some((version, path)) => safeCreate(path).right.map(version -> _)
       case _                     => Zero
     }
+  }
   private val ref = new AtomicReference[Resource[(Version, A)]](create_!)
   def map[B](f: A => B): Resource[B] = ref.get().right.map { case (_, resource) => f(resource) }
   def apply[B](f: A => B = identity _): B = map(f).fold(throw _, identity)
