@@ -5,7 +5,7 @@ import salvo.tree._
 import salvo.core._
 import scala.collection.mutable.{ ListBuffer, ConcurrentMap }
 import scala.collection.JavaConversions._
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.{ ConcurrentHashMap, TimeUnit }
 import com.novus.jdbc.QueryExecutor
 import com.novus.jdbc.sqlite.Sqlite
 
@@ -20,7 +20,12 @@ abstract class Executors(implicit dir: SqliteDir) {
   }
 }
 
-class VersionedQueryExecutors[A <: Executors](tree: Tree, executors: Path => A) extends VersionedResource(
+class VersionedQueryExecutors[A <: Executors](tree: Tree, executors: Path => A, destroyDelay: (Long, TimeUnit) = (0, TimeUnit.SECONDS)) extends VersionedResource(
   tree,
   create = executors(_),
-  destroy = (_: Resource[A]).fold(_ => (), _.shutdown()))
+  destroy = (_: Resource[A]).fold(
+    _ => (),
+    qes => {
+      destroyDelay._2.sleep(destroyDelay._1)
+      qes.shutdown()
+    }))
