@@ -28,13 +28,19 @@ abstract class VersionedResource[A](tree: Tree, create: Path => Resource[A], des
     val tail = tree.history.tail()
     tail.start()
     logger.trace(log("initialized "+this+" using "+tail))
+    private def destroyer(previous: Resource[(Version, A)]): Thread =
+      new Thread(
+        new Runnable {
+          def run() {
+            destroy(previous.right.map(_._2))
+            logger.trace(log("destroyed resource: "+previous))
+          }
+        })
     private def activate(version: Version) {
       logger.info(log("activated version: "+version))
       val next = create_!
       logger.trace(log("created resource: "+next))
-      val previous = ref.getAndSet(next)
-      destroy(previous.right.map(_._2))
-      logger.trace(log("destroyed resource: "+previous))
+      destroyer(ref.getAndSet(next)).start
     }
     def run() {
       while (continue.get()) {
